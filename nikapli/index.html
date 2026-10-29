@@ -1,0 +1,770 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#06080a">
+<meta name="description" content="Хоррор-игра с выбором: доживи до 6:00 по правилам. 8 концовок.">
+<meta property="og:title" content="Ни капли: Правила">
+<meta property="og:description" content="В 03:17 из города исчезла вся вода. Доживи до 6:00 по правилам.">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>html,body{margin:0;padding:0}</style>
+<title>Ни капли: Правила</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@600;800&family=Golos+Text:wght@400;500;600&family=PT+Mono&family=Caveat:wght@600;700&display=swap">
+<style>
+/* Layout: one full-screen stage — scene art behind, caption box at the bottom, HUD on top; overlays for the rules leaflet, title and endings. Single dark look on purpose. */
+:root {
+  --ink: #06080a;      /* night */
+  --fg: #e8edee;       /* text */
+  --mute: #8a969b;     /* secondary */
+  --water: #74d3dc;    /* water / UI accent */
+  --amber: #ffb547;    /* hints */
+  --red: #ff3b36;      /* danger */
+  --paper: #d8d0bc;    /* leaflet paper */
+  --paper-ink: #22201c;
+  --line: rgba(232, 237, 238, .14);
+  --f-disp: "Rubik", "Arial Black", system-ui, sans-serif;
+  --f-body: "Golos Text", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "PT Mono", "Courier New", monospace;
+  --f-hand: "Caveat", "Comic Sans MS", cursive;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { background: var(--ink); color: var(--fg); font: 400 17px/1.45 var(--f-body); overflow: hidden; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--water); outline-offset: 3px; }
+
+#app { position: relative; height: 100%; max-width: 520px; margin: 0 auto; overflow: hidden; background: var(--ink); }
+.art { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; transition: opacity .7s ease; transform-origin: 50% 45%; }
+.art.on { opacity: 1; animation: kb 22s ease-out forwards; }
+@keyframes kb { from { transform: scale(1.02); } to { transform: scale(1.12); } }
+#cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.ln { animation: lnIn .45s ease-out; }
+@keyframes lnIn { from { opacity: 0; transform: translateY(8px); filter: blur(5px); } to { opacity: 1; transform: none; filter: none; } }
+#shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to bottom, rgba(6,8,10,.75) 0%, rgba(6,8,10,0) 18%, rgba(6,8,10,0) 42%, rgba(6,8,10,.92) 70%, var(--ink) 100%); }
+#grain { position: absolute; inset: -50%; pointer-events: none; opacity: .09; mix-blend-mode: overlay; animation: grain .5s steps(4) infinite;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"); }
+@keyframes grain { 0% { transform: translate(0,0); } 25% { transform: translate(-4%,3%); } 50% { transform: translate(3%,-2%); } 75% { transform: translate(-2%,-4%); } }
+#flash { position: absolute; inset: 0; background: var(--red); opacity: 0; pointer-events: none; mix-blend-mode: screen; }
+#flash.go { animation: flash .6s ease-out; }
+@keyframes flash { 0% { opacity: .55; } 100% { opacity: 0; } }
+#stage.shake { animation: shake .45s linear; }
+@keyframes shake { 0%,100% { transform: none; } 20% { transform: translate(-9px,4px); } 40% { transform: translate(8px,-6px); } 60% { transform: translate(-6px,-3px); } 80% { transform: translate(5px,6px); } }
+#stage { position: absolute; inset: 0; }
+
+/* HUD */
+#hud { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: calc(env(safe-area-inset-top, 0px) + 14px) max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); z-index: 5; }
+.chip { font: 600 12px/1 var(--f-body); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+#clock { font: 800 22px/1 var(--f-disp); color: var(--red); letter-spacing: .04em; font-variant-numeric: tabular-nums; text-shadow: 0 0 14px rgba(255,59,54,.6); }
+#rulesBtn { position: relative; display: flex; align-items: center; gap: 8px; padding: 9px 13px; border: 1px solid var(--line); border-radius: 999px; background: rgba(6,8,10,.55); backdrop-filter: blur(6px);
+  font: 600 12px/1 var(--f-body); letter-spacing: .12em; text-transform: uppercase; }
+#rulesBtn svg { width: 14px; height: 14px; }
+#rulesBtn .dot { position: absolute; top: -3px; right: -3px; width: 11px; height: 11px; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 0 rgba(255,59,54,.7); animation: ping 1.2s infinite; }
+@keyframes ping { 70% { box-shadow: 0 0 0 10px rgba(255,59,54,0); } 100% { box-shadow: 0 0 0 0 rgba(255,59,54,0); } }
+
+/* notification */
+#notif { position: absolute; left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 58px); z-index: 7;
+  display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 18px; background: rgba(28,32,36,.92); backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,.5);
+  transform: translateY(calc(-100% - 90px)); opacity: 0; transition: transform .45s cubic-bezier(.2,.9,.25,1.2), opacity .3s; }
+#notif.on { transform: none; opacity: 1; }
+#notif .av { flex: 0 0 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font: 800 16px/1 var(--f-disp); background: #2f5d63; color: var(--fg); }
+#notif b { display: block; font: 600 14px/1.2 var(--f-body); }
+#notif span { display: block; font-size: 14px; color: #c5cdd0; margin-top: 2px; }
+#notif small { margin-left: auto; color: var(--mute); font-size: 12px; }
+
+/* caption box */
+#box { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; display: flex; flex-direction: column; gap: 14px;
+  padding: 0 max(18px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 22px) max(18px, env(safe-area-inset-left, 0px)); }
+#lines { display: flex; flex-direction: column; gap: 8px; min-height: 120px; justify-content: flex-end; }
+.ln { font: 500 19px/1.42 var(--f-body); text-wrap: pretty; text-shadow: 0 2px 10px #000; transition: opacity .4s, font-size .3s; }
+.ln.old { opacity: .38; font-size: 15px; }
+.ln.red { font: 800 30px/1.1 var(--f-disp); color: var(--red); letter-spacing: .02em; text-shadow: 0 0 22px rgba(255,59,54,.7); }
+.ln.whisper { font-style: italic; color: #bcd7da; }
+#tap { align-self: center; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); animation: bob 1.4s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(4px); opacity: .5; } }
+
+#choices { display: flex; flex-direction: column; gap: 10px; }
+.ch { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 15px 16px; border-radius: 14px; border: 1px solid rgba(116,211,220,.35);
+  background: rgba(10,22,26,.78); font: 600 17px/1.25 var(--f-body); transform: translateY(8px); opacity: 0; animation: up .35s forwards; }
+.ch:nth-child(2) { animation-delay: .07s; } .ch:nth-child(3) { animation-delay: .14s; }
+.ch i { font: 800 13px/1 var(--f-disp); color: var(--water); font-style: normal; flex: 0 0 auto; }
+.ch:active { background: rgba(116,211,220,.2); transform: scale(.98); }
+@keyframes up { to { transform: none; opacity: 1; } }
+#timer { height: 5px; border-radius: 3px; background: rgba(255,255,255,.1); overflow: hidden; }
+#timer div { height: 100%; width: 100%; background: var(--amber); transform-origin: left; }
+#timer.low div { background: var(--red); }
+
+/* hold-your-breath */
+#hold { display: flex; flex-direction: column; align-items: center; gap: 12px; padding-bottom: 6px; }
+#holdBtn { position: relative; width: 148px; height: 148px; border-radius: 50%; display: grid; place-items: center; touch-action: none;
+  font: 800 19px/1.05 var(--f-disp); letter-spacing: .06em; text-align: center; background: radial-gradient(circle, #1b0b0b, #070303); border: 1px solid rgba(255,59,54,.4); }
+#holdBtn svg { position: absolute; inset: -6px; width: 160px; height: 160px; transform: rotate(-90deg); }
+#holdBtn.on { animation: tremble .12s infinite; }
+@keyframes tremble { 50% { transform: translate(1px,-1px) scale(.985); } }
+#holdHint { font-size: 14px; color: var(--mute); }
+.wh { position: absolute; z-index: 6; pointer-events: none; font: italic 500 16px/1 var(--f-body); color: #a9d0d4; opacity: 0; animation: wh 2.4s ease-out forwards; text-shadow: 0 0 8px #000; }
+@keyframes wh { 15% { opacity: .9; } 100% { opacity: 0; transform: translateY(-30px) scale(1.15); filter: blur(2px); } }
+
+/* overlays */
+.ov { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; overflow-y: auto;
+  padding: calc(env(safe-area-inset-top, 0px) + 24px) max(18px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 24px) max(18px, env(safe-area-inset-left, 0px)); }
+
+/* title */
+#title { justify-content: flex-end; gap: 18px; background: linear-gradient(to bottom, rgba(6,8,10,.2), rgba(6,8,10,.6) 45%, var(--ink) 80%); }
+#title .age { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 18px); right: max(18px, env(safe-area-inset-right, 0px)); font: 800 13px/1 var(--f-disp); padding: 6px 8px; border: 1.5px solid var(--fg); border-radius: 6px; }
+#title .brand { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 22px); left: max(18px, env(safe-area-inset-left, 0px)); }
+.logo { font: 800 clamp(54px, 16vw, 84px)/.88 var(--f-disp); letter-spacing: -.01em; text-transform: uppercase; }
+.logo em { display: block; font-style: normal; color: var(--water); text-shadow: 0 0 30px rgba(116,211,220,.45); }
+.logo-sub { display: flex; align-items: center; gap: 10px; font: 600 13px/1 var(--f-body); letter-spacing: .2em; text-transform: uppercase; color: var(--amber); }
+.logo-sub::before { content: ""; width: 26px; height: 2px; background: var(--amber); }
+.pitch { font-size: 16px; color: #c6cfd2; max-width: 34ch; }
+.btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 17px 18px; border-radius: 14px; font: 800 18px/1 var(--f-disp); letter-spacing: .06em; text-transform: uppercase; text-decoration: none; }
+.btn.main { background: var(--fg); color: var(--ink); }
+.btn.main:active { transform: scale(.98); }
+.btn.ghost { border: 1px solid var(--line); color: var(--fg); font: 600 15px/1 var(--f-body); letter-spacing: .02em; text-transform: none; padding: 15px; }
+.row { display: flex; gap: 10px; } .row > * { flex: 1; min-width: 0; }
+.meta { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13px; color: var(--mute); }
+.dots { display: flex; gap: 6px; } .dots span { width: 22px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.14); } .dots span.got { background: var(--red); box-shadow: 0 0 8px rgba(255,59,54,.6); } .dots span.gold { background: var(--amber); }
+
+/* rules leaflet */
+#rules { align-items: center; justify-content: center; gap: 16px; background: rgba(3,4,5,.86); backdrop-filter: blur(3px); }
+.sheet { position: relative; width: 100%; max-width: 420px; aspect-ratio: 3 / 4.15; perspective: 1400px; }
+.sheet-in { position: absolute; inset: 0; transition: transform .8s cubic-bezier(.3,.8,.3,1); transform-style: preserve-3d; }
+.sheet.flip .sheet-in { transform: rotateY(180deg); }
+.face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; padding: 22px 20px; border-radius: 3px; color: var(--paper-ink);
+  background: radial-gradient(120% 80% at 70% 20%, rgba(255,255,255,.25), transparent 60%), radial-gradient(60% 40% at 15% 90%, rgba(90,70,40,.25), transparent 70%), var(--paper);
+  box-shadow: 0 20px 50px rgba(0,0,0,.6); font: 400 14.5px/1.42 var(--f-mono); transform: rotate(-1.2deg); overflow: hidden; }
+.face.back { transform: rotateY(180deg) rotate(1deg); }
+.face h3 { font: 700 12px/1.3 var(--f-mono); text-align: center; letter-spacing: .06em; margin: 0 0 4px; }
+.face h2 { font: 700 19px/1.15 var(--f-mono); text-align: center; margin: 4px 0 14px; letter-spacing: .04em; }
+.face ol { margin: 0; padding: 0 0 0 20px; display: flex; flex-direction: column; gap: 9px; }
+.face li.odd { font-family: "Courier New", monospace; font-weight: 700; letter-spacing: -.02em; transform: rotate(.6deg) translateX(2px); color: #15130f; }
+.face .foot { position: absolute; left: 20px; right: 20px; bottom: 16px; font-size: 11.5px; border-top: 1px dashed rgba(34,32,28,.45); padding-top: 8px; display: flex; justify-content: space-between; }
+.stamp { position: absolute; right: 18px; bottom: 44px; width: 86px; height: 86px; border: 3px solid rgba(40,70,150,.55); border-radius: 50%; display: grid; place-items: center; text-align: center;
+  font: 700 9px/1.15 var(--f-mono); color: rgba(40,70,150,.6); transform: rotate(-14deg); }
+.wet { position: absolute; inset: 0; background: radial-gradient(40% 30% at 30% 40%, rgba(60,50,30,.28), transparent 70%), radial-gradient(30% 25% at 75% 70%, rgba(60,50,30,.22), transparent 70%); pointer-events: none; }
+.hand { font: 700 27px/1.12 var(--f-hand); color: #b3121a; display: flex; flex-direction: column; gap: 10px; padding-top: 8px; transform: rotate(-2deg); }
+.hand u { text-decoration-thickness: 2px; }
+.hand .sig { align-self: flex-end; font-size: 25px; }
+.rules-bar { display: flex; gap: 10px; width: 100%; max-width: 420px; }
+#flipBtn[hidden] + #closeRules { flex: 1; }
+
+/* ending */
+#ending { justify-content: flex-end; gap: 16px; background: linear-gradient(to bottom, rgba(20,0,0,.35), rgba(6,8,10,.75) 40%, var(--ink) 75%); }
+#ending .k { font: 600 13px/1 var(--f-body); letter-spacing: .2em; text-transform: uppercase; color: var(--mute); }
+#ending h1 { margin: 0; font: 800 clamp(48px, 15vw, 70px)/.92 var(--f-disp); text-transform: uppercase; color: var(--red); text-shadow: 0 0 30px rgba(255,59,54,.5); text-wrap: balance; }
+#ending.good h1 { color: var(--amber); text-shadow: 0 0 30px rgba(255,181,71,.45); }
+#ending .txt { font-size: 17px; color: #d3dadc; display: flex; flex-direction: column; gap: 6px; }
+.tip { display: flex; gap: 10px; padding: 12px 14px; border: 1px dashed rgba(255,181,71,.55); border-radius: 12px; font-size: 14.5px; color: var(--amber); }
+.tip b { font: 800 12px/1.6 var(--f-disp); letter-spacing: .1em; text-transform: uppercase; }
+.next { font: 800 15px/1.2 var(--f-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--water); }
+#toast { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 30px); transform: translate(-50%, 30px); z-index: 20; padding: 10px 16px; border-radius: 999px; background: var(--fg); color: var(--ink); font: 600 14px/1 var(--f-body); opacity: 0; transition: .3s; pointer-events: none; white-space: nowrap; }
+#toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+@media (prefers-reduced-motion: reduce) { .art.on, #grain, #tap, .dot { animation: none !important; } #stage.shake { animation: none; } }
+</style>
+
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="cv" aria-hidden="true"></canvas>
+    <div id="shade"></div><div id="grain"></div><div id="flash"></div>
+  </div>
+
+  <div id="hud" hidden>
+    <span id="clock">03:17</span>
+    <span class="chip" id="chap">Глава 1</span>
+    <button id="rulesBtn" aria-label="Открыть памятку">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 1.5h7l3 3v10H3z"/><path d="M5.5 7h5M5.5 9.5h5M5.5 12h3"/></svg>
+      Памятка<span class="dot" id="rulesDot" hidden></span>
+    </button>
+  </div>
+
+  <div id="notif" aria-live="polite"><div class="av" id="nAv">Д</div><div><b id="nFrom">Дима</b><span id="nText"></span></div><small>сейчас</small></div>
+
+  <div id="box" hidden>
+    <div id="lines" aria-live="polite"></div>
+    <div id="tap">нажми, чтобы продолжить</div>
+    <div id="timer" hidden><div></div></div>
+    <div id="choices"></div>
+    <div id="hold" hidden>
+      <button id="holdBtn" aria-label="Зажми и не отпускай">
+        <svg viewBox="0 0 160 160"><circle cx="80" cy="80" r="76" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="5"/><circle id="ring" cx="80" cy="80" r="76" fill="none" stroke="#ff3b36" stroke-width="5" stroke-linecap="round" stroke-dasharray="477.5" stroke-dashoffset="477.5"/></svg>
+        НЕ<br>ДЫШИ
+      </button>
+      <div id="holdHint">Зажми и не отпускай, пока оно не уйдёт</div>
+    </div>
+  </div>
+
+  <!-- title -->
+  <div class="ov" id="title">
+    <span class="chip brand">Operation Zero</span>
+    <span class="age">16+</span>
+    <div class="logo">Ни<br>капли<em>Правила</em></div>
+    <div class="logo-sub">Глава 1 · Ночь без воды</div>
+    <p class="pitch">В 03:17 из города исчезла вся вода. Под дверь просунули памятку. Соблюдай правила и доживи до 6:00. Только одно правило в ней чужое.</p>
+    <button class="btn main" id="startBtn">Начать</button>
+    <div class="meta"><span id="tProg">Концовки: 0 из 8</span><span class="dots" id="tDots"></span></div>
+    <div class="meta"><span>Лучше в наушниках и с выключенным светом</span></div>
+  </div>
+
+  <!-- rules -->
+  <div class="ov" id="rules" hidden>
+    <div class="sheet" id="sheet">
+      <div class="sheet-in">
+        <div class="face front">
+          <h3>МУП «ГОРВОДОКАНАЛ»</h3>
+          <h2>ПАМЯТКА ЖИЛЬЦАМ<br>при отключении воды</h2>
+          <ol>
+            <li>До 6:00 не открывайте краны, даже если в трубах слышна вода.</li>
+            <li>Не открывайте дверь. Никому. Ваши близкие придут утром.</li>
+            <li>Не наступайте на мокрые следы.</li>
+            <li>Не смотрите в воду, которая появилась сама.</li>
+            <li class="odd">Если из слива попросят вернуть, ответьте: «Мне нечего отдать».</li>
+          </ol>
+          <div class="stamp">ГОРВОДО-<br>КАНАЛ<br>★<br>ДИСПЕТЧЕР</div>
+          <div class="foot"><span>Соблюдение обязательно</span><span>Дисп.: 3-17-00</span></div>
+        </div>
+        <div class="face back">
+          <div class="wet"></div>
+          <div class="hand">
+            <span><u>5-е правило</u> дописали НЕ ОНИ.</span>
+            <span>Оно проверит, правда ли тебе нечего отдать. А ты на две трети вода.</span>
+            <span>Ничего не говори. Зажми рот и не дыши, пока оно не уйдёт.</span>
+            <span class="sig">кв. 37</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="rules-bar">
+      <button class="btn ghost" id="flipBtn" hidden>Перевернуть</button>
+      <button class="btn main" id="closeRules">Понятно</button>
+    </div>
+  </div>
+
+  <!-- ending -->
+  <div class="ov" id="ending" hidden>
+    <span class="k" id="eK">Концовка 1 из 8</span>
+    <h1 id="eTitle">Кран</h1>
+    <div class="txt" id="eText"></div>
+    <div class="tip" id="eTip"><b>Совет</b><span></span></div>
+    <div class="next" id="eNext" hidden>Глава 2 — скоро</div>
+    <div class="meta"><span id="eProg">Найдено 1 из 8</span><span class="dots" id="eDots"></span></div>
+    <div class="row">
+      <button class="btn main" id="retryBtn">Переиграть</button>
+      <button class="btn ghost" id="shareBtn">Позвать друга</button>
+    </div>
+    <div class="row">
+      <button class="btn ghost" id="restartBtn">С самого начала</button>
+      <a class="btn ghost" id="ytLink" href="https://www.youtube.com/channel/UCuzJ-02FipM5BdH52USSLow/shorts" target="_blank" rel="noopener">Сериал на YouTube</a>
+    </div>
+  </div>
+  <div id="toast"></div>
+</div>
+
+<script>
+/* ===================== config ===================== */
+const CFG = {
+  botLink: "https://t.me/OpZeroHorrorBot/nikapli",
+  art: n => `art/${n}.jpg`,
+};
+const TG = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData ? window.Telegram.WebApp : null;
+
+/* ===================== story ===================== */
+// line: string | {t, fx, art, notif:{from,text}, cls}
+const N = {
+  n0: { time: "03:17", art: "clock317", lines: [
+      "03:17.",
+      "Ты просыпаешься от тишины. Слишком полной.",
+      { t: "На кухне шипит кран… и замолкает.", fx: "gurgle" },
+      { t: "Телефон вспыхивает.", notif: { from: "Дима", text: "ты не спишь? у меня вода пропала. вообще вся" } },
+      { t: "У входной двери шуршит бумага. Кто-то просунул листок.", fx: "paper", art: "door" } ],
+    choices: [{ t: "Поднять листок", to: "n1", act: "rules" }] },
+
+  n1: { time: "03:24", art: "tap", lines: [
+      "Во рту сухо, будто ты наелся песка.",
+      { t: "А в трубах журчит. Громко. Совсем как вода.", fx: "gurgle" },
+      "Кран будто ждёт, когда ты его откроешь." ],
+    timer: 7, timeout: { to: "E_kran", say: "Рука сама тянется к крану…" },
+    choices: [{ t: "Открыть кран", to: "E_kran" }, { t: "Не трогать", to: "n2" }] },
+
+  n2: { time: "03:31", art: "door", lines: [
+      { t: "Тук. Тук-тук.", fx: "knock" },
+      { t: "— Солнце, это мама. Открой… Я так пить хочу.", fx: "whisper", cls: "whisper" },
+      "Мама вчера уехала на дачу. Там нет связи.",
+      { t: "— Открой. Пожалуйста. У меня всё пересохло.", fx: "knock", cls: "whisper" } ],
+    timer: 8, timeout: { to: "n3", say: "Ты замираешь и молчишь." },
+    choices: [{ t: "Открыть дверь", to: "E_gost" }, { t: "Молчать", to: "n3" }, { t: "Спросить, как зовут вашего кота", to: "n2q" }] },
+
+  n2q: { time: "03:33", art: "door", lines: [
+      "— Мам… а как зовут нашего кота?",
+      "За дверью долго молчат.",
+      { t: "— Кота… — голос уже у самой замочной скважины. — Мы. Не. Помним.", fx: "whisper", cls: "whisper" },
+      { t: "Из-под двери ползёт вода. Тёплая. Шаги уходят вниз по лестнице. Мокрые.", fx: "drip" } ],
+    choices: [{ t: "Отойти от двери", to: "n3" }] },
+
+  n3: { time: "03:40", art: "footprints", lines: [
+      "Надо дойти до кухни. Там последняя бутылка воды.",
+      "В коридоре мокрые следы. Босые. Из ванной к твоей комнате.",
+      { t: "Они ещё не высохли. Кто-то прошёл здесь только что.", fx: "drip" },
+      "Следы перегораживают весь проход." ],
+    timer: 6, timeout: { to: "E_sled", say: "Ты стоишь слишком долго. Пол под ногами намокает." },
+    choices: [{ t: "Перешагнуть", to: "n4" }, { t: "Идти как есть", to: "E_sled" }] },
+
+  n4: { time: "03:52", art: "fridge", lines: [
+      "Холодильник. Три бутылки. Запечатанные. Пустые.",
+      { t: "А на столе стоит кружка. Полная до краёв.", art: "cup" },
+      "Ты её не наливал.",
+      { t: "Вода в ней дрожит. Будто кто-то дышит над ней.", fx: "drip" } ],
+    timer: 7, timeout: { to: "E_otr", say: "Взгляд сам опускается в кружку…" },
+    choices: [{ t: "Заглянуть в кружку", to: "E_otr" }, { t: "Накрыть ладонью, не глядя", to: "n4b" }, { t: "Вылить в раковину", to: "n4c" }] },
+
+  n4c: { time: "03:53", art: "tap_on", lines: [
+      "Ты переворачиваешь кружку над раковиной.",
+      { t: "Вода не падает. Она висит над сливом…", fx: "low" },
+      "…и медленно поднимается к твоему лицу." ],
+    timer: 4, timeout: { to: "E_otr", say: "Ты смотришь. Ты не можешь не смотреть." },
+    choices: [{ t: "Зажмуриться и отвернуться", to: "n4d" }, { t: "Смотреть", to: "E_otr" }] },
+
+  n4d: { time: "03:54", art: "tap", lines: [
+      "Что-то мокрое касается щеки. Медленно. Как язык.",
+      "И уходит.",
+      { t: "Листок в кармане намок. На обороте проступили красные буквы.", fx: "unlock" } ],
+    choices: [{ t: "Идти дальше", to: "n5" }] },
+
+  n4b: { time: "03:55", art: "cup", lines: [
+      "Ладонь ложится на кружку. Вода под ней тёплая.",
+      "Она шевелится. Щекочет кожу, как чьи-то губы.",
+      "Ты не смотришь. Считаешь до десяти.",
+      "Когда ты убираешь руку, кружка пустая. А ладонь сухая.",
+      { t: "Листок в кармане намок. На обороте проступили красные буквы.", fx: "unlock" } ],
+    choices: [{ t: "Идти дальше", to: "n5" }] },
+
+  n5: { time: "04:44", art: "drain", lines: [
+      "Из ванной доносится бульканье.",
+      "Ты заглядываешь внутрь. Слив дышит. Вверх-вниз.",
+      { t: "И из трубы, совсем близко, кто-то шепчет:", fx: "whisper" },
+      { t: "«ВЕРНИ»", fx: "sting", cls: "red" } ],
+    timer: 12, timeout: { to: "n5h", say: "Голос не может выдавить ни звука." },
+    choices: [{ t: "«Мне нечего отдать»", to: "E_prov" }, { t: "«Забирай»", to: "E_sdel" }, { t: "Зажать рот и не дышать", to: "n5h" }] },
+
+  n5h: { time: "04:45", art: "drain", lines: [ { t: "Слив начинает втягивать воздух. Твой воздух.", fx: "low" } ],
+    hold: { secs: 6, ok: "n6", fail: "E_vdoh" } },
+
+  n6: { time: "06:00", art: "tap_on", lines: [
+      { t: "06:00. Трубы вздрагивают.", fx: "gurgle" },
+      "Из крана бежит вода. Обычная. Холодная.",
+      { t: "Телефон вибрирует.", notif: { from: "Мама", text: "солнце, на даче не было связи. ты как? приеду к обеду" } },
+      "Значит, ночью за дверью была не она.",
+      { t: "Ты умываешься и поднимаешь глаза к зеркалу.", art: "mirror" },
+      { t: "Твоё отражение улыбается. А ты — нет.", fx: "sting", cls: "red" } ],
+    auto: "E_rass" },
+};
+
+const E = {
+  E_kran: { n: 1, title: "Кран", art: "tap_on", text: ["Из крана хлынула вода. Чёрная. Тёплая. Как изо рта.", "Ты успел сделать один глоток. Этого хватило."], tip: "Правило 1: до 6:00 краны не открывают, что бы ни журчало в трубах." },
+  E_gost: { n: 2, title: "Гость", art: "window_smile", text: ["На пороге стояла мама. Мокрая до нитки. Улыбалась слишком широко.", "— Спасибо, — сказала она и шагнула внутрь. За ней тянулся след."], tip: "Правило 2: дверь не открывают никому. Можно попробовать узнать, кто там." },
+  E_sled: { n: 3, title: "След", art: "footprints", text: ["Пол под ногами стал мокрым. Ты посмотрел вниз: твои ступни босые.", "И они уже идут. Без тебя."], tip: "Правило 3: мокрые следы не трогают. Совсем." },
+  E_otr: { n: 4, title: "Отражение", art: "palms_face", text: ["В воде было твоё лицо. Только мокрое.", "Оно открыло рот раньше тебя. «Меняемся», — сказало оно."], tip: "Правило 4: не смотри в воду, которая появилась сама." },
+  E_prov: { n: 5, title: "Проверка", art: "well_voice", text: ["— Нечего? — переспросил слив. — Проверим.", "Человек на две трети состоит из воды. Утром тебя нашли сухим."], tip: "Пятое правило в памятке набрано другим шрифтом. Переверни её." },
+  E_sdel: { n: 6, title: "Сделка", art: "drain", text: ["— Спасибо, — булькнуло в трубе.", "Ты отдал всё: слёзы, слюну, кровь. Город получил воду назад. Без тебя."], tip: "Не отдавай ему ничего. Даже на словах." },
+  E_vdoh: { n: 7, title: "Вдох", art: "drain", text: ["Ты не выдержал и вдохнул.", "Вместе с воздухом в лёгкие вошло что-то влажное. Теперь оно дышит за тебя."], tip: "Держи до конца. Оно уходит через шесть секунд." },
+  E_rass: { n: 8, title: "Рассвет", art: "mirror", good: true, text: ["Ты дожил до утра. Вода вернулась.", "Но то, что жило в трубах, теперь смотрит на тебя из зеркала."], tip: "Это настоящая концовка. Остальные семь тоже стоит найти." },
+};
+const ART = ["clock317","door","tap","tap_on","footprints","fridge","cup","drain","mirror","window_smile","palms_face","well_voice"];
+
+/* ===================== state ===================== */
+const S = { node: null, line: 0, typing: false, backUnlocked: false, lastChoice: "n0", flags: {}, endings: new Set(), timerPaused: false, after: null };
+const $ = id => document.getElementById(id);
+
+function loadEndings() {
+  try { const v = JSON.parse(localStorage.getItem("nk_endings") || "[]"); v.forEach(x => S.endings.add(x)); } catch (e) {}
+  if (TG && TG.CloudStorage) { try { TG.CloudStorage.getItem("nk_endings", (err, v) => { if (!err && v) { try { JSON.parse(v).forEach(x => S.endings.add(x)); renderDots(); } catch (e) {} } }); } catch (e) {} }
+}
+function saveEndings() {
+  const v = JSON.stringify([...S.endings]);
+  try { localStorage.setItem("nk_endings", v); } catch (e) {}
+  if (TG && TG.CloudStorage) { try { TG.CloudStorage.setItem("nk_endings", v); } catch (e) {} }
+}
+function renderDots() {
+  const keys = Object.keys(E);
+  [["tDots", "tProg", "Концовки: "], ["eDots", "eProg", "Найдено "]].forEach(([d, p, lbl]) => {
+    $(d).innerHTML = keys.map(k => `<span class="${S.endings.has(k) ? (E[k].good ? "gold" : "got") : ""}"></span>`).join("");
+    $(p).textContent = `${lbl}${S.endings.size} из ${keys.length}`;
+  });
+}
+
+/* ===================== audio ===================== */
+let AC = null, master = null, noiseBuf = null, droneGain = null;
+function audioInit() {
+  if (AC) { if (AC.state === "suspended") AC.resume(); return; }
+  try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+  master = AC.createGain(); master.gain.value = .9; master.connect(AC.destination);
+  noiseBuf = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate);
+  const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  // drone: two detuned saws through a low pass + breathing noise
+  droneGain = AC.createGain(); droneGain.gain.value = 0; droneGain.connect(master);
+  const lp = AC.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 170; lp.connect(droneGain);
+  [55, 55.6, 82.4].forEach((f, i) => { const o = AC.createOscillator(); o.type = i === 2 ? "sine" : "sawtooth"; o.frequency.value = f; const g = AC.createGain(); g.gain.value = i === 2 ? .25 : .5; o.connect(g); g.connect(lp); o.start(); });
+  const ns = AC.createBufferSource(); ns.buffer = noiseBuf; ns.loop = true; const bp = AC.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 500; bp.Q.value = .7;
+  const ng = AC.createGain(); ng.gain.value = .05; const lfo = AC.createOscillator(); lfo.frequency.value = .13; const lg = AC.createGain(); lg.gain.value = .04; lfo.connect(lg); lg.connect(ng.gain); lfo.start();
+  ns.connect(bp); bp.connect(ng); ng.connect(droneGain); ns.start();
+  droneGain.gain.linearRampToValueAtTime(.16, AC.currentTime + 3);
+  setInterval(() => { if (Math.random() < .45) sfx.drip(.35); }, 2600);
+}
+function env(g, t0, a, peak, dcy) { g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(peak, t0 + a); g.gain.exponentialRampToValueAtTime(0.0001, t0 + a + dcy); }
+function noise(t0, dur, type, freq, q, peak, a = .005) {
+  const s = AC.createBufferSource(); s.buffer = noiseBuf; const f = AC.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q; const g = AC.createGain();
+  env(g, t0, a, peak, dur); s.connect(f); f.connect(g); g.connect(master); s.start(t0, Math.random()); s.stop(t0 + a + dur + .05); return { f, g };
+}
+const sfx = {
+  drip(v = 1) { if (!AC) return; const t = AC.currentTime, o = AC.createOscillator(), g = AC.createGain(); o.type = "sine"; o.frequency.setValueAtTime(1500 + Math.random() * 500, t); o.frequency.exponentialRampToValueAtTime(420, t + .09); env(g, t, .004, .22 * v, .16); o.connect(g); g.connect(master); o.start(t); o.stop(t + .3);
+    const dl = AC.createDelay(); dl.delayTime.value = .19; const fb = AC.createGain(); fb.gain.value = .32; g.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(master); },
+  knock() { if (!AC) return; const t = AC.currentTime; [0, .42, .62].forEach(dt => { noise(t + dt, .18, "lowpass", 260, 1, .9); const o = AC.createOscillator(), g = AC.createGain(); o.frequency.value = 70; env(g, t + dt, .003, .7, .16); o.connect(g); g.connect(master); o.start(t + dt); o.stop(t + dt + .25); }); hap("heavy"); setTimeout(() => hap("heavy"), 420); setTimeout(() => hap("heavy"), 620); },
+  gurgle() { if (!AC) return; const t = AC.currentTime; for (let i = 0; i < 9; i++) { const { f } = noise(t + i * .11 + Math.random() * .05, .09, "bandpass", 300 + Math.random() * 500, 8, .35); f.frequency.exponentialRampToValueAtTime(900, t + i * .11 + .09); } },
+  whisper() { if (!AC) return; const t = AC.currentTime; const { g } = noise(t, 1.6, "bandpass", 2600, 1.4, .16, .3); const l = AC.createOscillator(); l.frequency.value = 7; const lg = AC.createGain(); lg.gain.value = .07; l.connect(lg); lg.connect(g.gain); l.start(t); l.stop(t + 2); },
+  step() { if (!AC) return; const t = AC.currentTime; noise(t, .12, "lowpass", 420, 1.2, .22, .01); noise(t + .02, .08, "bandpass", 1600, 3, .05, .01); },
+  paper() { if (!AC) return; const t = AC.currentTime; for (let i = 0; i < 6; i++) noise(t + i * .06, .07, "highpass", 3000, .5, .12); },
+  low() { if (!AC) return; const t = AC.currentTime, o = AC.createOscillator(), g = AC.createGain(); o.type = "sawtooth"; o.frequency.setValueAtTime(90, t); o.frequency.exponentialRampToValueAtTime(38, t + 2.2); const f = AC.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 300; env(g, t, .4, .5, 2); o.connect(f); f.connect(g); g.connect(master); o.start(t); o.stop(t + 2.6); hap("medium"); },
+  sting() { if (!AC) return; const t = AC.currentTime; noise(t, .7, "highpass", 1200, .3, .7); noise(t, 1.1, "lowpass", 500, 1, .8);
+    [233, 247, 349].forEach(fq => { const o = AC.createOscillator(), g = AC.createGain(); o.type = "sawtooth"; o.frequency.setValueAtTime(fq * 2, t); o.frequency.exponentialRampToValueAtTime(fq * .5, t + 1.2); env(g, t, .01, .13, 1.2); o.connect(g); g.connect(master); o.start(t); o.stop(t + 1.4); });
+    hap("error"); flash(); shake(); scareT = performance.now(); },
+  beat(rate) { if (!AC) return; const t = AC.currentTime; [0, .16].forEach((dt, i) => { const o = AC.createOscillator(), g = AC.createGain(); o.frequency.value = i ? 48 : 58; env(g, t + dt, .01, i ? .45 : .7, .14); o.connect(g); g.connect(master); o.start(t + dt); o.stop(t + dt + .2); }); },
+  click() { if (!AC) return; const t = AC.currentTime; noise(t, .03, "bandpass", 1800, 2, .25); },
+};
+function hap(kind) {
+  try {
+    if (TG && TG.HapticFeedback) { if (kind === "error" || kind === "success" || kind === "warning") TG.HapticFeedback.notificationOccurred(kind); else TG.HapticFeedback.impactOccurred(kind); return; }
+    if (navigator.vibrate) navigator.vibrate(kind === "error" ? [90, 40, 160] : kind === "heavy" ? 45 : kind === "medium" ? 25 : 12);
+  } catch (e) {}
+}
+function flash() { const f = $("flash"); f.classList.remove("go"); void f.offsetWidth; f.classList.add("go"); }
+function shake() { const s = $("stage"); s.classList.remove("shake"); void s.offsetWidth; s.classList.add("shake"); }
+
+/* ===================== art ===================== */
+// Scenes are 720x1280 paintings drawn to a canvas with a slow push-in; FX[name] draws live overlays in the same painting coordinates.
+const IMG = {}; ART.forEach(n => { const i = new Image(); i.src = CFG.art(n); IMG[n] = i; });
+const FOCUS = { footprints: [360, 470], drain: [360, 520], tap: [430, 600], tap_on: [430, 600], clock317: [420, 500], door: [360, 560], cup: [360, 600], mirror: [360, 520], fridge: [360, 520] };
+const RM = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+const cv = $("cv"), ctx = cv.getContext("2d");
+const offA = document.createElement("canvas"), offB = document.createElement("canvas");
+let CW = 0, CH = 0, DPR = 1, cur = null, prev = null, scareT = -1e9;
+function resize() {
+  const r = $("app").getBoundingClientRect(); DPR = Math.min(2, window.devicePixelRatio || 1); CW = r.width; CH = r.height;
+  [cv, offA, offB].forEach(c => { c.width = Math.round(CW * DPR); c.height = Math.round(CH * DPR); });
+}
+window.addEventListener("resize", resize);
+function setArt(name) {
+  if (!name || (cur && cur.name === name)) return;
+  prev = cur; if (prev) prev.fade = performance.now();
+  cur = { name, t0: performance.now(), st: {} };
+}
+const ease = x => 1 - Math.pow(1 - x, 3);
+function mapper(sc, now) {
+  const z = RM ? 1.04 : 1.03 + .1 * ease(Math.min(1, (now - sc.t0) / 20000));
+  const s = Math.max(CW / 720, CH / 1280) * z, f = FOCUS[sc.name] || [360, 560];
+  let ox = CW / 2 - f[0] * s, oy = CH * .38 - f[1] * s;
+  ox = Math.min(0, Math.max(CW - 720 * s, ox)); oy = Math.min(0, Math.max(CH - 1280 * s, oy));
+  return { s, ox, oy, M: (x, y) => [ox + x * s, oy + y * s] };
+}
+function paint(off, sc, now) {
+  const g = off.getContext("2d"); g.setTransform(DPR, 0, 0, DPR, 0, 0); g.clearRect(0, 0, CW, CH);
+  const img = IMG[sc.name]; if (!img || !img.complete || !img.naturalWidth) return;
+  const m = mapper(sc, now); g.drawImage(img, m.ox, m.oy, 720 * m.s, 1280 * m.s);
+  const f = FX[sc.name]; if (f) { g.save(); f(g, Math.max(0, now - sc.t0) / 1000, m, sc.st); g.restore(); }
+}
+// tiny deterministic noise for flicker
+const hsh = n => { const x = Math.sin(n * 127.1) * 43758.5453; return x - Math.floor(x); };
+const flick = t => { const i = Math.floor(t * 12); return hsh(i) * .5 + hsh(i + 1) * .5; };
+function glowDot(g, x, y, r, col, blur) { g.save(); g.shadowColor = col; g.shadowBlur = blur; g.fillStyle = col; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); g.restore(); }
+function drop(g, x, y, r, a) { r = Math.max(0.01, r); g.save(); g.globalAlpha = a; g.fillStyle = "rgba(190,220,238,.9)"; g.beginPath(); g.moveTo(x, y - r * 1.9); g.bezierCurveTo(x + r * 1.1, y - r * .6, x + r, y + r, x, y + r); g.bezierCurveTo(x - r, y + r, x - r * 1.1, y - r * .6, x, y - r * 1.9); g.fill(); g.fillStyle = "rgba(255,255,255,.85)"; g.beginPath(); g.arc(x - r * .35, y - r * .1, r * .28, 0, 7); g.fill(); g.restore(); }
+function ripple(g, x, y, k, rx, a) { k = Math.max(0.001, k); g.save(); g.strokeStyle = `rgba(200,225,240,${a * (1 - k)})`; g.lineWidth = 1.5; g.beginPath(); g.ellipse(x, y, rx * k, rx * k * .3, 0, 0, 7); g.stroke(); g.restore(); }
+function foot(g, x, y, ang, s, left, a) {
+  g.save(); g.translate(x, y); g.rotate(ang); g.scale(s * (left ? -1 : 1), s); g.globalAlpha = a;
+  g.fillStyle = "rgba(28,42,54,.62)";
+  g.beginPath(); g.ellipse(0, 14, 9, 11, 0, 0, 7); g.fill();                 // heel
+  g.beginPath(); g.ellipse(1.5, -2, 8, 13, .08, 0, 7); g.fill();             // arch/ball
+  g.beginPath(); g.ellipse(3, -12, 10.5, 9, .1, 0, 7); g.fill();
+  [[-6, -25, 4.6], [0.5, -27.5, 3.6], [6, -26.5, 3.2], [10.5, -23.5, 2.8], [13.5, -19.5, 2.5]].forEach(([tx, ty, tr]) => { g.beginPath(); g.arc(tx, ty, tr, 0, 7); g.fill(); });
+  g.fillStyle = "rgba(200,225,240,.22)"; g.beginPath(); g.ellipse(-3, -10, 3, 7, .1, 0, 7); g.fill();
+  g.restore();
+}
+const FX = {
+  clock317(g, t, m) {
+    const on = (t % 1) < .55, [x, y] = m.M(360, 485), s = m.s;
+    if (on) { glowDot(g, x, y - 20 * s, 7.5 * s, "#ff3e2e", 18 * s); glowDot(g, x, y + 20 * s, 7.5 * s, "#ff3e2e", 18 * s); }
+    else { g.fillStyle = "rgba(70,12,10,.9)"; [-20, 20].forEach(d => { g.beginPath(); g.arc(x, y + d * s, 7.5 * s, 0, 7); g.fill(); }); }
+    const ph = (t % 3.2) / 3.2, [gx, gy] = m.M(604 + ph * 6, 470 + ease(ph) * 110);  // last drop slides down the empty glass
+    drop(g, gx, gy, 4.2 * s, ph < .92 ? 1 : (1 - ph) / .08);
+  },
+  tap(g, t, m, st) {
+    const s = m.s, [tx, ty] = m.M(435, 456), [, dy] = m.M(0, 790), P = 2.6, k = t % P, cyc = Math.floor(t / P);
+    if (k < 1.9) drop(g, tx, ty + 4 * s * (k / 1.9), 5.2 * s * Math.min(1, k / 1.6), 1);
+    else { const ft = k - 1.9, yy = ty + 6 * s + .5 * 4200 * s * ft * ft; if (yy < dy) drop(g, tx, yy, 5 * s, 1);
+      else { if (st.last !== cyc) { st.last = cyc; sfx.drip(.5); } ripple(g, tx, dy, Math.min(1, (yy - dy) / (260 * s)), 60 * s, .9); ripple(g, tx, dy, Math.min(1, (yy - dy) / (420 * s)), 40 * s, .6); } }
+  },
+  tap_on(g, t, m) {
+    const s = m.s, [tx, ty] = m.M(435, 456), [, dy] = m.M(0, 788);
+    g.strokeStyle = "rgba(240,250,255,.75)"; g.lineWidth = 2 * s;
+    for (let i = 0; i < 7; i++) { const y = ty + ((t * 520 * s + i * 52 * s) % (dy - ty)); g.beginPath(); g.moveTo(tx - 2 * s, y); g.lineTo(tx - 2 * s, Math.min(dy, y + 16 * s)); g.stroke(); }
+    for (let i = 0; i < 3; i++) ripple(g, tx, dy - 2 * s, ((t * 1.4 + i / 3) % 1), 70 * s, .8);
+    for (let i = 0; i < 10; i++) { const ph = (t * 2.3 + hsh(i)) % 1, a = hsh(i + 9) * 6.28; g.fillStyle = `rgba(220,240,250,${.8 * (1 - ph)})`; g.beginPath(); g.arc(tx + Math.cos(a) * 34 * s * ph, dy - 6 * s - Math.sin(ph * 3.14) * 22 * s, 1.6 * s, 0, 7); g.fill(); }
+  },
+  door(g, t, m) {
+    const s = m.s, fl = flick(t * .6);
+    const [px, py] = m.M(360, 420), blink = (t % 7.5) > 6.9;    // someone looks through the peephole
+    const gr = g.createRadialGradient(px, py, 0, px, py, 70 * s); gr.addColorStop(0, `rgba(255,200,140,${blink ? .02 : .22 + .14 * fl})`); gr.addColorStop(1, "rgba(255,200,140,0)");
+    g.fillStyle = gr; g.fillRect(px - 80 * s, py - 80 * s, 160 * s, 160 * s);
+    if (blink) { g.fillStyle = "rgba(8,6,6,.95)"; g.beginPath(); g.arc(px, py, 10 * s, 0, 7); g.fill(); }
+    // light strip under the door, broken by two feet shifting their weight
+    const [lx, ly] = m.M(176, 1053);
+    const feet = [300 + 18 * Math.sin(t * .7), 410 + 14 * Math.sin(t * .9 + 1.3)];
+    g.fillStyle = `rgba(255,190,120,${.25 + .2 * fl})`; g.fillRect(lx, ly, 368 * s, 10 * s);
+    feet.forEach(fx => { const [x] = m.M(fx, 0); const gg = g.createLinearGradient(x - 40 * s, 0, x + 40 * s, 0); gg.addColorStop(0, "rgba(0,0,0,0)"); gg.addColorStop(.25, "rgba(0,0,0,.92)"); gg.addColorStop(.75, "rgba(0,0,0,.92)"); gg.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = gg; g.fillRect(x - 40 * s, ly - 2 * s, 80 * s, 16 * s); });
+    const [wx, wy] = m.M(380, 1120), sp = 1 + .06 * Math.sin(t * .8);  // the puddle breathes
+    g.fillStyle = "rgba(120,150,175,.12)"; g.beginPath(); g.ellipse(wx, wy, 170 * s * sp, 50 * s * sp, 0, 0, 7); g.fill();
+  },
+  footprints(g, t, m, st) {
+    // an invisible walker leaves fresh wet prints from the bathroom drain towards the room
+    const s = m.s, L = 10.5, k = t % L, cyc = Math.floor(t / L), n = 9, gap = .7;
+    for (let i = 0; i < n; i++) {
+      const at = .6 + i * gap; if (k < at) break;
+      if (st.c !== cyc * 100 + i) { st.c = cyc * 100 + i; sfx.step(); if (i > 5) hap("light"); }
+      const p = i / (n - 1), x = 470 - 250 * p + (i % 2 ? 22 : -22), y = 230 + 560 * p;
+      const [X, Y] = m.M(x, y), born = Math.min(1, (k - at) / .25), fade = k > L - 1.2 ? (L - k) / 1.2 : 1;
+      foot(g, X, Y, Math.atan2(560, -250) + Math.PI / 2, s * (1.6 + .2 * (1 - born)), i % 2 === 0, born * fade);
+    }
+  },
+  fridge(g, t, m) { const f = flick(t); if (f > .78) { g.fillStyle = `rgba(0,0,0,${(f - .78) * 2.2})`; g.fillRect(0, 0, CW, CH); } else { g.fillStyle = `rgba(230,240,255,${.04 * f})`; g.fillRect(0, 0, CW, CH); } },
+  cup(g, t, m) {
+    const s = m.s, [x, y] = m.M(360, 569);
+    for (let i = 0; i < 9; i++) {   // steam
+      const ph = (t * .22 + i / 9) % 1, wob = Math.sin(t * 1.3 + i * 1.7) * 26 * s * ph;
+      const r = (30 + 50 * ph) * s, yy = y - 20 * s - ph * 430 * s;
+      const gr = g.createRadialGradient(x + wob, yy, 0, x + wob, yy, r); gr.addColorStop(0, `rgba(215,215,220,${.13 * Math.sin(ph * 3.14)})`); gr.addColorStop(1, "rgba(215,215,220,0)");
+      g.fillStyle = gr; g.fillRect(x + wob - r, yy - r, 2 * r, 2 * r);
+    }
+    for (let i = 0; i < 2; i++) { const k = (t * .55 + i / 2) % 1; g.strokeStyle = `rgba(150,140,130,${.5 * (1 - k)})`; g.lineWidth = 1.4 * s; g.beginPath(); g.ellipse(x, y, 112 * s * k, 15 * s * k, 0, 0, 7); g.stroke(); }
+  },
+  drain(g, t, m) {
+    const s = m.s, [x, y] = m.M(360, 500), br = .5 + .5 * Math.sin(t * 1.6);   // the drain breathes
+    const gr = g.createRadialGradient(x, y, 10 * s, x, y, 160 * s); gr.addColorStop(0, `rgba(0,0,0,${.25 + .35 * br})`); gr.addColorStop(1, "rgba(0,0,0,0)");
+    g.fillStyle = gr; g.beginPath(); g.arc(x, y, 160 * s, 0, 7); g.fill();
+    for (let i = 0; i < 6; i++) { const ph = (t * .5 + hsh(i)) % 1, bx = x + (hsh(i + 3) - .5) * 200 * s, by = y + (hsh(i + 5) - .5) * 200 * s; if (ph < .8) { g.strokeStyle = `rgba(190,215,225,${.6 * (1 - ph / .8)})`; g.lineWidth = 1.2 * s; g.beginPath(); g.arc(bx, by, (2 + ph * 7) * s, 0, 7); g.stroke(); } }
+  },
+  mirror(g, t, m) {
+    const s = m.s;
+    for (let i = 0; i < 12; i++) {   // water runs down the inside of the glass
+      const x = 140 + hsh(i) * 440, sp = .06 + hsh(i + 20) * .09, ph = (t * sp + hsh(i + 40)) % 1;
+      const [X, Y0] = m.M(x, 225), [, Y] = m.M(x, 225 + ph * 640);
+      g.strokeStyle = "rgba(170,200,215,.22)"; g.lineWidth = 2.4 * s; g.beginPath(); g.moveTo(X, Y0); g.lineTo(X, Y); g.stroke();
+      g.fillStyle = "rgba(200,225,238,.6)"; g.beginPath(); g.ellipse(X, Y, 3.2 * s, 4.6 * s, 0, 0, 7); g.fill();
+    }
+    const [x0, y0] = m.M(128, 220), [x1, y1] = m.M(591, 870), fog = .1 + .06 * Math.sin(t * .5);
+    g.fillStyle = `rgba(200,210,215,${fog})`; g.fillRect(x0, y0, x1 - x0, y1 - y0);
+  },
+};
+// floating dust in the light, drawn in screen space
+const DUST = Array.from({ length: 26 }, (_, i) => ({ x: hsh(i), y: hsh(i + 50), r: .6 + hsh(i + 90) * 1.6, v: .004 + hsh(i + 130) * .01, p: hsh(i + 170) * 6.28 }));
+let lastFrame = 0;
+function frame(now) {
+  requestAnimationFrame(frame);
+  if (document.hidden || !CW) return;
+  if (now - lastFrame < 30) return; lastFrame = now;            // ~33 fps is plenty and saves battery
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+  if (!cur) return;
+  paint(offA, cur, now);
+  if (prev && now - prev.fade < 800) { paint(offB, prev, now); ctx.drawImage(offB, 0, 0); ctx.globalAlpha = ease((now - prev.fade) / 800); ctx.drawImage(offA, 0, 0); ctx.globalAlpha = 1; }
+  else { prev = null; ctx.drawImage(offA, 0, 0); }
+  const sk = 1 - Math.min(1, (now - scareT) / 700);
+  if (sk > 0) { ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = .32 * sk; ctx.drawImage(offA, 14 * sk * DPR, 0); ctx.drawImage(offA, -10 * sk * DPR, 4 * sk * DPR); ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
+    for (let i = 0; i < 5; i++) { const y = hsh(now * .01 + i) * cv.height, h = (8 + hsh(i + now) * 50) * DPR; ctx.drawImage(offA, 0, y, cv.width, h, (hsh(i * 3 + now) - .5) * 70 * sk * DPR, y, cv.width, h); } }
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  if (!RM) { const t = now / 1000; DUST.forEach(d => { const x = ((d.x + Math.sin(t * .2 + d.p) * .02) % 1) * CW, y = ((d.y - t * d.v) % 1 + 1) % 1 * CH; ctx.fillStyle = `rgba(230,235,240,${.12 + .1 * Math.sin(t + d.p)})`; ctx.beginPath(); ctx.arc(x, y, d.r, 0, 7); ctx.fill(); }); }
+  const fl = flick(now / 1000 * .7); if (fl > .86) { ctx.fillStyle = `rgba(0,0,0,${(fl - .86) * 2})`; ctx.fillRect(0, 0, CW, CH); }   // the light stutters
+}
+resize(); requestAnimationFrame(frame);
+
+/* ===================== notification / toast ===================== */
+let nT = 0;
+function notify(from, text) {
+  $("nFrom").textContent = from; $("nText").textContent = text; $("nAv").textContent = from[0];
+  $("nAv").style.background = from === "Мама" ? "#6a3a4a" : "#2f5d63";
+  $("notif").classList.add("on"); hap("medium"); sfx.click();
+  clearTimeout(nT); nT = setTimeout(() => $("notif").classList.remove("on"), 4200);
+}
+let tT = 0;
+function toast(t) { $("toast").textContent = t; $("toast").classList.add("on"); clearTimeout(tT); tT = setTimeout(() => $("toast").classList.remove("on"), 2200); }
+
+/* ===================== engine ===================== */
+function go(id, prefix) {
+  if (id.startsWith("E_")) return ending(id, prefix);
+  const n = N[id]; S.node = id; S.line = 0; S.lastChoice = id;
+  $("clock").textContent = n.time; setArt(n.art);
+  $("lines").innerHTML = ""; $("choices").innerHTML = ""; $("timer").hidden = true; $("hold").hidden = true; $("tap").hidden = false;
+  if (prefix) addLine({ t: prefix, cls: "whisper" }, true);
+  showLine();
+}
+let typeT = 0;
+function addLine(l, instant) {
+  const L = typeof l === "string" ? { t: l } : l;
+  [...$("lines").children].forEach(c => c.classList.add("old"));
+  while ($("lines").children.length > 2) $("lines").firstChild.remove();
+  const el = document.createElement("div"); el.className = "ln" + (L.cls ? " " + L.cls : ""); $("lines").appendChild(el);
+  if (instant) { el.textContent = L.t; return; }
+  S.typing = true; let i = 0; const txt = L.t; const sp = L.cls === "red" ? 70 : 24;
+  clearInterval(typeT);
+  typeT = setInterval(() => { i++; el.textContent = txt.slice(0, i); if (i >= txt.length) { clearInterval(typeT); S.typing = false; afterLine(); } }, sp);
+  el._full = txt;
+}
+function finishTyping() { const el = $("lines").lastChild; if (el && el._full) el.textContent = el._full; clearInterval(typeT); S.typing = false; afterLine(); }
+function showLine() {
+  const n = N[S.node]; const L = n.lines[S.line]; const o = typeof L === "string" ? { t: L } : L;
+  if (o.art) setArt(o.art);
+  if (o.fx && o.fx !== "unlock") sfx[o.fx] && sfx[o.fx]();
+  if (o.fx === "unlock") unlockBack();
+  if (o.notif) setTimeout(() => notify(o.notif.from, o.notif.text), 150);
+  addLine(o);
+}
+function afterLine() {
+  const n = N[S.node];
+  if (S.line >= n.lines.length - 1) { $("tap").hidden = true; setTimeout(() => offer(n), 350); }
+}
+function advance() {
+  if (!S.node || !$("rules").hidden || !$("ending").hidden || !$("title").hidden) return;
+  const n = N[S.node];
+  if (S.typing) return finishTyping();
+  if (S.line < n.lines.length - 1) { S.line++; sfx.click(); showLine(); }
+}
+function offer(n) {
+  if (n.auto) return setTimeout(() => ending(n.auto), 1600);
+  if (n.hold) return startHold(n.hold);
+  const box = $("choices"); box.innerHTML = "";
+  n.choices.forEach((c, i) => {
+    const b = document.createElement("button"); b.className = "ch"; b.innerHTML = `<i>${String.fromCharCode(1040 + i)}</i><span></span>`; b.querySelector("span").textContent = c.t;
+    b.onclick = e => { e.stopPropagation(); choose(c); }; box.appendChild(b);
+  });
+  if (n.timer) startTimer(n.timer, n.timeout);
+}
+let tm = null;
+function startTimer(secs, to) {
+  stopTimer(); const bar = $("timer"), fill = bar.firstElementChild; bar.hidden = false; bar.classList.remove("low");
+  let left = secs * 1000, last = performance.now(), nextBeat = 0;
+  const tick = now => {
+    const dt = now - last; last = now;
+    if (!S.timerPaused) {
+      left -= dt; nextBeat -= dt;
+      fill.style.transform = `scaleX(${Math.max(0, left / (secs * 1000))})`;
+      if (left < 3000) bar.classList.add("low");
+      if (nextBeat <= 0) { sfx.beat(); if (left < 3000) hap("light"); nextBeat = 320 + 600 * Math.max(0, left / (secs * 1000)); }
+      if (left <= 0) { stopTimer(); $("choices").innerHTML = ""; return go(to.to, to.say); }
+    }
+    tm = requestAnimationFrame(tick);
+  };
+  tm = requestAnimationFrame(tick);
+}
+function stopTimer() { if (tm) cancelAnimationFrame(tm); tm = null; $("timer").hidden = true; }
+function choose(c) {
+  stopTimer(); hap("light"); sfx.click();
+  $("choices").innerHTML = "";
+  if (c.act === "rules") { S.after = c.to; openRules(); return; }
+  go(c.to);
+}
+
+/* hold-your-breath */
+const WHISPERS = ["верни", "я тебя слышу", "ты же весь из воды", "мама просила пить", "открой рот", "дыши", "отдай", "ещё чуть-чуть"];
+let holdState = null;
+function startHold(h) {
+  $("hold").hidden = false; const btn = $("holdBtn"), ring = $("ring"); const C = 477.5;
+  let held = 0, active = false, done = false, started = false, last = 0, wT = 0, raf = 0;
+  ring.style.strokeDashoffset = C;
+  const loop = now => {
+    if (done) return;
+    const dt = now - last; last = now;
+    if (active) {
+      held += dt; ring.style.strokeDashoffset = C * (1 - held / (h.secs * 1000));
+      wT -= dt; if (wT <= 0) { whisperFloat(); sfx.whisper(); hap("light"); wT = 650; }
+      if (held >= h.secs * 1000) { done = true; finish(true); return; }
+    }
+    raf = requestAnimationFrame(loop);
+  };
+  const down = e => { e.preventDefault(); e.stopPropagation(); if (done) return; active = true; started = true; btn.classList.add("on"); last = performance.now(); hap("medium"); cancelAnimationFrame(raf); raf = requestAnimationFrame(loop); };
+  const up = e => { if (e) { e.preventDefault(); e.stopPropagation(); } if (!active || done) return; active = false; btn.classList.remove("on"); if (started && held < h.secs * 1000) { done = true; finish(false); } };
+  const finish = ok => { cancelAnimationFrame(raf); btn.classList.remove("on"); cleanup(); $("hold").hidden = true; if (ok) { hap("success"); go(h.ok); } else { sfx.sting(); go(h.fail, "Ты не выдержал."); } };
+  const cleanup = () => { btn.removeEventListener("pointerdown", down); window.removeEventListener("pointerup", up); window.removeEventListener("pointercancel", up); btn.removeEventListener("contextmenu", stop); };
+  const stop = e => e.preventDefault();
+  btn.addEventListener("pointerdown", down); window.addEventListener("pointerup", up); window.addEventListener("pointercancel", up); btn.addEventListener("contextmenu", stop);
+  holdState = { cleanup };
+}
+function whisperFloat() {
+  const w = document.createElement("div"); w.className = "wh"; w.textContent = WHISPERS[Math.floor(Math.random() * WHISPERS.length)];
+  const app = $("app").getBoundingClientRect();
+  w.style.left = (10 + Math.random() * 60) + "%"; w.style.top = (14 + Math.random() * 50) + "%"; $("app").appendChild(w); setTimeout(() => w.remove(), 2500);
+}
+
+/* rules */
+function openRules() {
+  S.timerPaused = true; sfx.paper(); $("rules").hidden = false; $("sheet").classList.remove("flip");
+  $("flipBtn").hidden = !S.backUnlocked; $("flipBtn").textContent = "Перевернуть"; $("rulesDot").hidden = true;
+}
+function closeRules() {
+  $("rules").hidden = true; S.timerPaused = false; sfx.paper();
+  if (S.after) { const t = S.after; S.after = null; go(t); }
+}
+function unlockBack() { S.backUnlocked = true; $("rulesDot").hidden = false; hap("warning"); sfx.paper(); }
+
+/* ending */
+function ending(id, prefix) {
+  const e = E[id]; stopTimer(); S.node = null;
+  if (prefix) { addLine({ t: prefix, cls: "whisper" }, true); }
+  const isNew = !S.endings.has(id); S.endings.add(id); saveEndings(); renderDots();
+  setTimeout(() => {
+    setArt(e.art); if (!e.good) sfx.sting(); else { sfx.low(); hap("success"); }
+    $("box").hidden = true; $("hud").hidden = true;
+    $("ending").classList.toggle("good", !!e.good);
+    $("eK").textContent = `Концовка ${e.n} из 8${isNew ? " · новая" : ""}`;
+    $("eTitle").textContent = e.title;
+    $("eText").innerHTML = ""; e.text.forEach(t => { const p = document.createElement("span"); p.textContent = t; $("eText").appendChild(p); });
+    $("eTip").querySelector("span").textContent = e.tip;
+    $("eNext").hidden = !e.good;
+    $("retryBtn").hidden = !!e.good;
+    $("ending").hidden = false; $("ending").scrollTop = 0;
+    S.lastEnding = id;
+  }, prefix ? 1100 : 250);
+}
+function share() {
+  const e = E[S.lastEnding] || E.E_kran;
+  const text = `Я получил концовку «${e.title}» в «Ни капли: Правила». Найдено ${S.endings.size} из 8. Сможешь дожить до 6:00?`;
+  if (TG && TG.openTelegramLink) { TG.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(CFG.botLink)}&text=${encodeURIComponent(text)}`); return; }
+  try { navigator.clipboard.writeText(text + " " + CFG.botLink).then(() => toast("Текст скопирован, отправь другу"), () => toast("Не удалось скопировать")); } catch (err) { toast("Не удалось скопировать"); }
+}
+function startGame(from) {
+  audioInit(); hap("medium");
+  $("title").hidden = true; $("ending").hidden = true; $("hud").hidden = false; $("box").hidden = false;
+  if (from === "n0") { S.backUnlocked = false; $("rulesDot").hidden = true; }
+  go(from);
+}
+
+/* wiring */
+$("stage").addEventListener("click", advance); $("box").addEventListener("click", e => { if (e.target.closest("button")) return; advance(); });
+$("startBtn").onclick = () => startGame("n0");
+$("rulesBtn").onclick = e => { e.stopPropagation(); if (S.node === null && S.after === null) return; openRules(); };
+$("closeRules").onclick = closeRules;
+$("flipBtn").onclick = () => { const s = $("sheet"); s.classList.toggle("flip"); $("flipBtn").textContent = s.classList.contains("flip") ? "Лицевая сторона" : "Перевернуть"; sfx.paper(); hap("light"); };
+$("retryBtn").onclick = () => startGame(S.lastChoice || "n0");
+$("restartBtn").onclick = () => startGame("n0");
+$("shareBtn").onclick = share;
+document.addEventListener("keydown", e => { if (e.key === " " || e.key === "Enter") { if (!$("title").hidden) return; advance(); } });
+
+if (TG) { try { TG.ready(); TG.expand(); TG.setHeaderColor && TG.setHeaderColor("#06080a"); TG.setBackgroundColor && TG.setBackgroundColor("#06080a"); TG.disableVerticalSwipes && TG.disableVerticalSwipes(); } catch (e) {} }
+loadEndings(); renderDots(); setArt("clock317");
+window.__game = { go, N, E, S };
+</script>
+
+</body>
+</html>
