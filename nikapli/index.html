@@ -273,6 +273,7 @@ const CFG = {
   botLink: "https://t.me/OpZeroHorrorBot/nikapli",
   art: n => `art/${n}.jpg`,
   gc: "", // код GoatCounter: "opzero" -> https://opzero.goatcounter.com
+  ym: 0,  // номер счётчика Яндекс Метрики, например 98765432
 };
 
 /* аналитика GoatCounter: визит + события. Источник берётся из ?startapp=... */
@@ -292,7 +293,17 @@ const STAT = (() => {
     document.head.appendChild(sc);
     send({ path: "/nikapli", title: "Ни капли: открыли игру", referrer: "src:" + src });
   }
-  const ev = (name, title) => { if (CFG.gc) send({ path: name, title: title || name, event: true }); };
+  if (CFG.ym) {
+    (function (m, e, t, r, i, k, a) { m[i] = m[i] || function () { (m[i].a = m[i].a || []).push(arguments); }; m[i].l = 1 * new Date();
+      k = e.createElement(t); a = e.getElementsByTagName(t)[0]; k.async = 1; k.src = r; a.parentNode.insertBefore(k, a);
+    })(window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+    try { ym(CFG.ym, "init", { clickmap: true, trackLinks: true, accurateTrackBounce: true, webvisor: false, params: { src } }); } catch (e) {}
+  }
+  const ymGoal = name => name.startsWith("end-") ? "ending" : name;
+  const ev = (name, title) => {
+    if (CFG.gc) send({ path: name, title: title || name, event: true });
+    if (CFG.ym) { try { ym(CFG.ym, "reachGoal", ymGoal(name), { event: title || name, src }); } catch (e) {} }
+  };
   return { src, ev };
 })();
 const TG = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData ? window.Telegram.WebApp : null;
