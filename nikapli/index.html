@@ -272,7 +272,29 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--water); outline
 const CFG = {
   botLink: "https://t.me/OpZeroHorrorBot/nikapli",
   art: n => `art/${n}.jpg`,
+  gc: "", // код GoatCounter: "opzero" -> https://opzero.goatcounter.com
 };
+
+/* аналитика GoatCounter: визит + события. Источник берётся из ?startapp=... */
+const STAT = (() => {
+  const tg = window.Telegram && Telegram.WebApp;
+  let src = "";
+  try { src = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || new URLSearchParams(location.search).get("tgWebAppStartParam") || ""; } catch (e) {}
+  src = String(src).replace(/[^\w-]/g, "").slice(0, 32) || "direct";
+  const queue = [];
+  const send = o => { try { if (window.goatcounter && goatcounter.count) goatcounter.count(o); else queue.push(o); } catch (e) {} };
+  if (CFG.gc) {
+    window.goatcounter = { no_onload: true, allow_local: false };
+    const sc = document.createElement("script");
+    sc.async = true; sc.src = "https://gc.zgo.at/count.js";
+    sc.dataset.goatcounter = `https://${CFG.gc}.goatcounter.com/count`;
+    sc.onload = () => { while (queue.length) send(queue.shift()); };
+    document.head.appendChild(sc);
+    send({ path: "/nikapli", title: "Ни капли: открыли игру", referrer: "src:" + src });
+  }
+  const ev = (name, title) => { if (CFG.gc) send({ path: name, title: title || name, event: true }); };
+  return { src, ev };
+})();
 const TG = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData ? window.Telegram.WebApp : null;
 
 /* ===================== story ===================== */
@@ -723,6 +745,7 @@ function ending(id, prefix) {
   const e = E[id]; stopTimer(); S.node = null;
   if (prefix) { addLine({ t: prefix, cls: "whisper" }, true); }
   const isNew = !S.endings.has(id); S.endings.add(id); saveEndings(); renderDots();
+  STAT.ev("end-" + id, "Концовка: " + ((E[id] && E[id].title) || id));
   setTimeout(() => {
     setArt(e.art); if (!e.good) sfx.sting(); else { sfx.low(); hap("success"); }
     $("box").hidden = true; $("hud").hidden = true;
@@ -739,12 +762,14 @@ function ending(id, prefix) {
 }
 function share() {
   const e = E[S.lastEnding] || E.E_kran;
+  STAT.ev("share", "Позвал друга");
   const text = `Я получил концовку «${e.title}» в «Ни капли: Правила». Найдено ${S.endings.size} из 8. Сможешь дожить до 6:00?`;
-  if (TG && TG.openTelegramLink) { TG.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(CFG.botLink)}&text=${encodeURIComponent(text)}`); return; }
+  if (TG && TG.openTelegramLink) { TG.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(CFG.botLink + "?startapp=friend")}&text=${encodeURIComponent(text)}`); return; }
   try { navigator.clipboard.writeText(text + " " + CFG.botLink).then(() => toast("Текст скопирован, отправь другу"), () => toast("Не удалось скопировать")); } catch (err) { toast("Не удалось скопировать"); }
 }
 function startGame(from) {
   audioInit(); hap("medium");
+  STAT.ev(from === "n0" ? "start" : "retry", from === "n0" ? "Начал игру" : "Переиграл с выбора");
   $("title").hidden = true; $("ending").hidden = true; $("hud").hidden = false; $("box").hidden = false;
   if (from === "n0") { S.backUnlocked = false; $("rulesDot").hidden = true; }
   go(from);
