@@ -1,1 +1,99 @@
-<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=nikapli/"><title>Operation Zero</title><a href="nikapli/">Ни капли: Правила</a>
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#06080a">
+<title>Operation Zero · Правила</title>
+<meta name="description" content="Хоррор-игры по правилам от канала Operation Zero.">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@600;800&family=Golos+Text:wght@400;500;600&family=Caveat:wght@700&display=swap">
+<style>
+/* Layout: one column of chapter cards over a dark night ground; same tokens as the games. */
+:root {
+  --ink: #06080a; --fg: #e8edee; --mute: #8a969b; --water: #74d3dc; --amber: #ffb547; --red: #ff3b36;
+  --line: rgba(232, 237, 238, .14);
+  --f-disp: "Rubik", "Arial Black", system-ui, sans-serif;
+  --f-body: "Golos Text", "Segoe UI", system-ui, sans-serif;
+  --f-hand: "Caveat", "Comic Sans MS", cursive;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body { margin: 0; min-height: 100%; }
+body { background: var(--ink); color: var(--fg); font: 400 16px/1.45 var(--f-body); -webkit-tap-highlight-color: transparent; }
+.wrap { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px;
+  padding: calc(env(safe-area-inset-top, 0px) + 26px) max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 28px) max(16px, env(safe-area-inset-left, 0px)); }
+.top { display: flex; justify-content: space-between; align-items: center; }
+.chip { font: 600 12px/1 var(--f-body); letter-spacing: .14em; text-transform: uppercase; color: var(--mute); }
+.age { font: 800 13px/1 var(--f-disp); padding: 6px 8px; border: 1.5px solid var(--fg); border-radius: 6px; }
+h1 { margin: 6px 0 0; font: 800 clamp(44px, 13vw, 64px)/.9 var(--f-disp); text-transform: uppercase; letter-spacing: -.01em; text-wrap: balance; }
+h1 em { font-style: normal; color: var(--red); text-shadow: 0 0 26px rgba(255,59,54,.45); }
+.lead { margin: 0; color: #c6cfd2; max-width: 36ch; }
+.note { font: 700 24px/1.1 var(--f-hand); color: #d8302a; transform: rotate(-2deg); margin: -4px 0 4px; }
+.card { position: relative; display: block; min-height: 220px; border-radius: 20px; overflow: hidden; text-decoration: none; color: var(--fg); border: 1px solid var(--line); background: #0c1114; }
+.card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 32%; opacity: .78; transition: transform .6s ease; }
+.card:active img { transform: scale(1.04); }
+.card .sh { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(6,8,10,.05) 20%, rgba(6,8,10,.92) 85%); }
+.card .in { position: relative; display: flex; flex-direction: column; justify-content: flex-end; gap: 8px; min-height: 220px; padding: 16px; box-sizing: border-box; }
+.card .k { font: 600 12px/1 var(--f-body); letter-spacing: .16em; text-transform: uppercase; color: var(--amber); }
+.card h2 { margin: 0; font: 800 30px/1 var(--f-disp); text-transform: uppercase; }
+.card p { margin: 0; font-size: 14.5px; color: #c9d2d5; }
+.card .row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.dots { display: flex; gap: 5px; } .dots span { width: 18px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.18); } .dots span.got { background: var(--red); } .dots span.gold { background: var(--amber); }
+.go { font: 800 14px/1 var(--f-disp); letter-spacing: .1em; text-transform: uppercase; padding: 10px 14px; border-radius: 999px; background: var(--fg); color: var(--ink); }
+.new { position: absolute; top: 14px; right: 14px; z-index: 2; font: 800 11px/1 var(--f-disp); letter-spacing: .12em; padding: 6px 9px; border-radius: 999px; background: var(--red); color: #fff; }
+.foot { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--mute); }
+.foot a { color: var(--water); }
+a:focus-visible { outline: 2px solid var(--water); outline-offset: 3px; }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="top"><span class="chip">Operation Zero</span><span class="age">16+</span></div>
+  <h1>Хорроры<br>по <em>правилам</em></h1>
+  <p class="lead">Каждая глава — ночь, памятка с правилами и выбор на таймере. Одно правило всегда чужое.</p>
+  <div class="note">Найди, какое. — кв. 37</div>
+
+  <a class="card" href="elektrichka/" id="g-el">
+    <img src="elektrichka/art/vagon.jpg" alt="">
+    <span class="new">Новая</span>
+    <div class="sh"></div>
+    <div class="in">
+      <span class="k">Глава 2 · Последний рейс</span>
+      <h2>Последняя электричка</h2>
+      <p>Ты опоздал и сел на последнюю, в 23:59. На стекле памятка. Выйди на своей станции.</p>
+      <div class="row"><span class="dots" data-key="el_endings" data-good="E_rass"></span><span class="go">Играть</span></div>
+    </div>
+  </a>
+
+  <a class="card" href="nikapli/" id="g-nk">
+    <img src="nikapli/art/clock317.jpg" alt="">
+    <div class="sh"></div>
+    <div class="in">
+      <span class="k">Глава 1 · Ночь без воды</span>
+      <h2>Ни капли</h2>
+      <p>В 03:17 из города исчезла вся вода. Доживи до 6:00 по правилам из памятки.</p>
+      <div class="row"><span class="dots" data-key="nk_endings" data-good="E_rass"></span><span class="go">Играть</span></div>
+    </div>
+  </a>
+
+  <div class="foot"><span>Новые главы выходят вместе с сериалами</span><a href="https://www.youtube.com/channel/UCuzJ-02FipM5BdH52USSLow/shorts" target="_blank" rel="noopener">YouTube</a></div>
+</main>
+<script>
+const TG = window.Telegram && Telegram.WebApp && Telegram.WebApp.initData ? Telegram.WebApp : null;
+function paint(el, list) {
+  const set = new Set(list);
+  el.innerHTML = Array.from({ length: 8 }, (_, i) => `<span class="${i < set.size ? (set.has(el.dataset.good) && i === set.size - 1 ? "gold" : "got") : ""}"></span>`).join("");
+  el.title = `Концовки: ${set.size} из 8`;
+}
+document.querySelectorAll(".dots").forEach(el => {
+  let v = [];
+  try { v = JSON.parse(localStorage.getItem(el.dataset.key) || "[]"); } catch (e) {}
+  paint(el, v);
+  if (TG && TG.CloudStorage) { try { TG.CloudStorage.getItem(el.dataset.key, (err, s) => { if (!err && s) { try { paint(el, [...new Set([...v, ...JSON.parse(s)])]); } catch (e) {} } }); } catch (e) {} }
+});
+if (TG) { try { TG.ready(); TG.expand(); TG.setHeaderColor && TG.setHeaderColor("#06080a"); TG.setBackgroundColor && TG.setBackgroundColor("#06080a"); } catch (e) {} }
+</script>
+</body>
+</html>

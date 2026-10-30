@@ -8,6 +8,14 @@
 <meta property="og:title" content="Ни капли: Правила">
 <meta property="og:description" content="В 03:17 из города исчезла вся вода. Доживи до 6:00 по правилам.">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+/* one bot link opens any chapter: ?startapp=elektrichka -> глава 2, ?startapp=hub -> список игр */
+(function () { try {
+  var tg = window.Telegram && Telegram.WebApp, p = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || new URLSearchParams(location.search).get("tgWebAppStartParam") || "";
+  var to = { elektrichka: "../elektrichka/", hub: "../" }[p];
+  if (to) location.replace(to + location.search + location.hash);
+} catch (e) {} })();
+</script>
 <style>html,body{margin:0;padding:0}</style>
 <title>Ни капли: Правила</title>
 <meta name="claude:viewport-fit-sides" content="cover">
