@@ -1,0 +1,4 @@
+<!doctype html><meta charset="utf-8"><script>
+const name = new URLSearchParams(location.search).get('f');
+fetch(name).then(r => r.blob()).then(b => { const t = window.opener || window.parent; t.postMessage({ relay: name, blob: b }, '*'); document.body.textContent = 'sent ' + b.size; });
+</script><body>relay</body>
