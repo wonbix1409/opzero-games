@@ -1,0 +1,33 @@
+name: Telegram-канал — публикация постов
+
+on:
+  push:
+    branches: [main]
+    paths: ["tgbot/queue/**"]
+  schedule:
+    - cron: "7,37 * * * *"   # каждые 30 минут: отложенные посты и счётчик подписчиков
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tg-channel
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Опубликовать посты, чьё время наступило
+        env:
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_CHANNEL: ${{ vars.TG_CHANNEL }}
+        run: python3 tgbot/post.py
+      - name: Сохранить журнал отправки
+        run: |
+          git config user.name "opzero-tgbot"
+          git config user.email "actions@users.noreply.github.com"
+          git add tgbot/sent.json tgbot/stats.json 2>/dev/null || true
+          git diff --cached --quiet || (git commit -m "tgbot: журнал отправки [skip ci]" && git push)

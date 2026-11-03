@@ -1,0 +1,18 @@
+{
+ "id": "hello",
+ "type": "photo",
+ "photo": "tgbot/img/zstream.jpg",
+ "pin": true,
+ "silent": true,
+ "text": "<b>Operation Zero · кв. 37</b>\n\nХоррор-сериалы по правилам, где одно правило всегда чужое. Здесь — новые серии раньше всех, голосования «что делать Егору», закулисье и игры.\n\n🧟 Сейчас идёт: <b>«Зомби. Кв. 37»</b>\n🎮 Игра по сериалу — в боте @OpZeroHorrorBot",
+ "buttons": [
+  [
+   "▶️ Сериал на YouTube",
+   "https://www.youtube.com/channel/UCuzJ-02FipM5BdH52USSLow/shorts"
+  ],
+  [
+   "🎮 Играть",
+   "https://t.me/OpZeroHorrorBot/nikapli?startapp=tgch"
+  ]
+ ]
+}

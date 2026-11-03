@@ -1,0 +1,12 @@
+{
+ "id": "game3",
+ "type": "photo",
+ "photo": "tgbot/img/peephole.jpg",
+ "text": "<b>Вышла игра «Зомби. Кв. 37»</b>\n\nПамятка МЧС из шести правил. Одно — чужое. Баба Валя стучит в дверь, воды на три дня, а сверху кто-то стучит SOS.\n\n8 концовок, настоящая — одна. Доживёшь до эвакуации?",
+ "buttons": [
+  [
+   "🎮 Играть в Telegram",
+   "https://t.me/OpZeroHorrorBot/nikapli?startapp=tgch"
+  ]
+ ]
+}
