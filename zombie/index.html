@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0f1030">
+<title>Зомби. Кв. 37 — Operation Zero</title>
+<meta name="description" content="Глава 3. Зомби-апокалипсис в хрущёвке. Памятка МЧС из шести правил — одно чужое.">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@600;800;900&family=Golos+Text:wght@400;500;600&family=Caveat:wght@700&family=PT+Mono&display=swap">
+<style>
+:root {
+  --ink: #0f1030; --fg: #f3f4ff; --mute: #9aa0c8; --yellow: #ffd23f; --red: #ff3b3b; --teal: #33d1c4; --blue: #2b6be0;
+  --line: rgba(243,244,255,.16);
+  --f-disp: "Rubik", "Arial Black", system-ui, sans-serif;
+  --f-body: "Golos Text", "Segoe UI", system-ui, sans-serif;
+  --f-hand: "Caveat", "Comic Sans MS", cursive;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--ink); color: var(--fg); font: 400 17px/1.45 var(--f-body); -webkit-tap-highlight-color: transparent; overflow: hidden; }
+button { font: inherit; color: inherit; cursor: pointer; }
+.scr { position: fixed; inset: 0; display: flex; flex-direction: column; }
+.bg { position: absolute; inset: 0; background: #0f1030 center/cover no-repeat; transition: opacity .35s; }
+.bg.shake { animation: shake .35s; }
+@keyframes shake { 20%{transform:translate(-8px,2px)} 40%{transform:translate(7px,-3px)} 60%{transform:translate(-5px,3px)} 80%{transform:translate(4px,-1px)} }
+.fade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,16,48,.0) 35%, rgba(15,16,48,.82) 62%, rgba(15,16,48,.97) 100%); pointer-events: none; }
+.hud { position: relative; display: flex; justify-content: space-between; gap: 8px; padding: calc(env(safe-area-inset-top,0px) + 12px) 16px 0; font: 800 14px/1 var(--f-disp); }
+.hud span { background: rgba(15,16,48,.8); padding: 8px 11px; border-radius: 10px; }
+.hud .day { background: var(--red); }
+.hud .w { color: var(--teal); }
+.box { position: relative; margin-top: auto; padding: 0 16px calc(env(safe-area-inset-bottom,0px) + 18px); max-width: 560px; width: 100%; align-self: center; }
+.txt { min-height: 118px; font: 500 19px/1.4 var(--f-body); text-wrap: pretty; }
+.txt p { margin: 0 0 8px; animation: up .3s ease-out both; }
+.txt p.q { font-weight: 600; color: var(--yellow); }
+.txt p.red { color: #ff8a8a; font-weight: 600; }
+@keyframes up { from { opacity: 0; transform: translateY(8px); } }
+.tap { margin-top: 6px; font: 600 13px/1 var(--f-body); color: var(--mute); text-align: center; letter-spacing: .08em; text-transform: uppercase; }
+.opts { display: grid; gap: 10px; margin-top: 10px; }
+.opt { width: 100%; padding: 16px 14px; border-radius: 16px; border: 0; font: 800 18px/1.2 var(--f-disp); background: #e0452b; text-align: center; }
+.opt.b { background: var(--blue); }
+.opt:active { transform: scale(.98); }
+.timer { height: 6px; border-radius: 3px; background: rgba(255,255,255,.15); overflow: hidden; margin-top: 4px; }
+.timer i { display: block; height: 100%; background: var(--yellow); transform-origin: left; }
+.hold { position: relative; width: 100%; padding: 22px 14px; border-radius: 18px; border: 2px solid var(--teal); background: rgba(51,209,196,.12); font: 800 19px/1.2 var(--f-disp); overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+.hold i { position: absolute; inset: 0; background: rgba(51,209,196,.35); transform-origin: left; transform: scaleX(0); }
+.hold span { position: relative; }
+/* title + end */
+.center { position: relative; margin-top: auto; padding: 0 20px calc(env(safe-area-inset-bottom,0px) + 26px); max-width: 560px; align-self: center; width: 100%; }
+.kick { font: 600 12px/1 var(--f-body); letter-spacing: .16em; text-transform: uppercase; color: var(--teal); }
+h1 { margin: 8px 0 6px; font: 900 clamp(48px, 15vw, 76px)/.9 var(--f-disp); text-transform: uppercase; }
+h1 em { font-style: normal; color: var(--yellow); }
+.lead { margin: 0 0 6px; color: #d4d7f2; }
+.note { font: 700 25px/1.1 var(--f-hand); color: var(--red); transform: rotate(-2deg); margin: 4px 0 14px; }
+.btn { display: block; width: 100%; padding: 17px; border: 0; border-radius: 18px; background: var(--yellow); color: #14152e; font: 900 20px/1 var(--f-disp); text-transform: uppercase; text-align: center; text-decoration: none; }
+.btn.ghost { background: transparent; color: var(--fg); border: 1.5px solid var(--line); font-size: 15px; margin-top: 10px; }
+.row { display: flex; gap: 10px; }
+.row .btn { flex: 1; }
+.dots { display: flex; gap: 6px; margin: 12px 0 16px; }
+.dots span { width: 22px; height: 8px; border-radius: 4px; background: rgba(255,255,255,.18); }
+.dots .got { background: var(--teal); }
+.dots .gold { background: var(--yellow); box-shadow: 0 0 10px var(--yellow); }
+.end-k { font: 800 14px/1 var(--f-disp); letter-spacing: .14em; color: var(--red); text-transform: uppercase; }
+.end-k.good { color: var(--yellow); }
+.end-t { margin: 8px 0 8px; font: 900 40px/1 var(--f-disp); text-transform: uppercase; }
+.hint { margin: 10px 0 0; font: 700 22px/1.1 var(--f-hand); color: #ff8a8a; }
+/* memo */
+.memo { position: fixed; inset: 0; background: rgba(8,9,26,.86); display: flex; align-items: center; justify-content: center; padding: 18px; z-index: 5; }
+.paper { position: relative; width: min(100%, 440px); background: #fffaf0; color: #1b1f33; border-radius: 14px; padding: 22px 20px 18px; transform: rotate(-1.2deg); box-shadow: 0 20px 60px rgba(0,0,0,.5); background-image: repeating-linear-gradient(#fffaf0 0 33px, #d8e4ff 33px 35px); }
+.paper h3 { margin: 0 0 8px; font: 900 20px/1.1 var(--f-disp); text-transform: uppercase; }
+.paper h3 small { display: block; font: 600 12px/1.2 var(--f-body); color: #6b6f8a; letter-spacing: .06em; }
+.paper ol { margin: 0; padding-left: 22px; font: 600 16px/35px var(--f-body); }
+.paper li.odd { font-family: "PT Mono", monospace; font-size: 14.5px; letter-spacing: -.02em; }
+.paper .back { font: 700 34px/1.1 var(--f-hand); color: #d8302a; padding: 30px 6px; transform: rotate(-3deg); }
+.paper .acts { display: flex; gap: 10px; margin-top: 14px; }
+.paper .acts button { flex: 1; padding: 12px; border: 0; border-radius: 12px; font: 800 15px/1 var(--f-disp); background: #1b1f33; color: #fff; }
+.paper .acts button.alt { background: #e8e3d4; color: #1b1f33; }
+.toast { position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%); background: #1b1f33; padding: 10px 16px; border-radius: 12px; font-size: 14px; z-index: 9; }
+.flash { position: fixed; inset: 0; background: var(--red); opacity: 0; pointer-events: none; z-index: 4; }
+.flash.on { animation: fl .6s; }
+@keyframes fl { 0% { opacity: .55; } 100% { opacity: 0; } }
+</style>
+</head>
+<body>
+
+<section class="scr" id="title">
+  <div class="bg" style="background-image:url(art/zstream.jpg)"></div>
+  <div class="fade"></div>
+  <div class="hud"><span>Operation Zero</span><span>16+</span></div>
+  <div class="center">
+    <div class="kick">Глава 3 · Апокалипсис в хрущёвке</div>
+    <h1>Зомби.<br><em>Кв. 37</em></h1>
+    <p class="lead">19:40. Стример в прямом эфире перестал моргать. Через 40 минут город уже не твой. Доживи до эвакуации по памятке МЧС.</p>
+    <div class="note">Одно правило — чужое. — кв. 37</div>
+    <div class="dots" id="tdots"></div>
+    <button class="btn" id="play">Играть</button>
+    <div class="row"><a class="btn ghost" href="../">Все главы</a><button class="btn ghost" id="share1">Позвать друга</button></div>
+  </div>
+</section>
+
+<section class="scr" id="game" hidden>
+  <div class="bg" id="bg"></div>
+  <div class="fade"></div>
+  <div class="hud"><span class="day" id="hday">ДЕНЬ 0</span><span id="htime">19:40</span><span class="w" id="hwater">Вода · 3 дн.</span></div>
+  <div class="box">
+    <div class="txt" id="txt"></div>
+    <div class="opts" id="opts"></div>
+    <div class="tap" id="tap">нажми, чтобы продолжить</div>
+  </div>
+</section>
+
+<section class="scr" id="end" hidden>
+  <div class="bg" id="ebg"></div>
+  <div class="fade" style="background:linear-gradient(180deg,rgba(15,16,48,.25),rgba(15,16,48,.94) 55%)"></div>
+  <div class="center">
+    <div class="end-k" id="ek">Концовка 1 из 8</div>
+    <div class="end-t" id="et"></div>
+    <p class="lead" id="ed"></p>
+    <div class="hint" id="eh"></div>
+    <div class="dots" id="edots"></div>
+    <button class="btn" id="again">Ещё раз</button>
+    <div class="row"><a class="btn ghost" href="../">Все главы</a><button class="btn ghost" id="share2">Позвать друга</button></div>
+  </div>
+</section>
+
+<div class="memo" id="memo" hidden>
+  <div class="paper">
+    <div id="front">
+      <h3>Памятка МЧС<small>рассылка · 20:31 · всем жителям района</small></h3>
+      <ol>
+        <li>Закройте дверь на оба замка.</li>
+        <li>Никакого света в окнах.</li>
+        <li>Они идут на звук. Не шумите.</li>
+        <li>Не сливайте воду: трубы слышно на весь стояк.</li>
+        <li class="odd">Если стучат соседи — откройте: вместе безопаснее.</li>
+        <li>Воду из батарей пейте только кипячёной.</li>
+      </ol>
+    </div>
+    <div id="backside" hidden><div class="back">Пятое — не наше.<br>Не открывай никому.<br>Даже своим.<br><span style="font-size:26px">— кв. 37</span></div></div>
+    <div class="acts"><button class="alt" id="flip">Перевернуть</button><button id="memook">Запомнил</button></div>
+  </div>
+</div>
+<div class="flash" id="flash"></div>
+
+<script>
+/* ===================== config ===================== */
+const CFG = {
+  botLink: "https://t.me/OpZeroHorrorBot/nikapli",
+  startapp: "zombie",
+  key: "zb_endings",
+  gc: "",
+  ym: 113921864,
+};
+const STAT = (() => {
+  const tg = window.Telegram && Telegram.WebApp;
+  let src = "";
+  try { src = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || new URLSearchParams(location.search).get("tgWebAppStartParam") || ""; } catch (e) {}
+  src = String(src).replace(/[^\w-]/g, "").slice(0, 32) || "direct";
+  if (CFG.ym) {
+    (function (m, e, t, r, i, k, a) { m[i] = m[i] || function () { (m[i].a = m[i].a || []).push(arguments); }; m[i].l = 1 * new Date();
+      k = e.createElement(t); a = e.getElementsByTagName(t)[0]; k.async = 1; k.src = r; a.parentNode.insertBefore(k, a);
+    })(window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+    try { ym(CFG.ym, "init", { clickmap: true, trackLinks: true, accurateTrackBounce: true, webvisor: false, params: { src, game: "zombie" } }); } catch (e) {}
+  }
+  const ev = (name, title) => { if (CFG.ym) { try { ym(CFG.ym, "reachGoal", "zb-" + (name.startsWith("end-") ? "ending" : name), { event: title || name, src }); } catch (e) {} } };
+  return { src, ev };
+})();
+const TG = window.Telegram && Telegram.WebApp && Telegram.WebApp.initData ? Telegram.WebApp : null;
+const $ = id => document.getElementById(id);
+const haptic = k => { try { TG && TG.HapticFeedback && TG.HapticFeedback.impactOccurred(k || "light"); } catch (e) {} };
+
+/* ===================== sound (WebAudio, синтез) ===================== */
+const SND = (() => {
+  let ac = null, drone = null;
+  const ctx = () => { if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } if (ac && ac.state === "suspended") ac.resume(); return ac; };
+  const tone = (f, d, v, type, f2) => { const a = ctx(); if (!a) return; const o = a.createOscillator(), g = a.createGain(); o.type = type || "sine"; o.frequency.setValueAtTime(f, a.currentTime); if (f2) o.frequency.exponentialRampToValueAtTime(f2, a.currentTime + d); g.gain.setValueAtTime(v, a.currentTime); g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + d); o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime + d + .02); };
+  const noise = (d, v, lp) => { const a = ctx(); if (!a) return; const b = a.createBuffer(1, a.sampleRate * d, a.sampleRate), x = b.getChannelData(0); for (let i = 0; i < x.length; i++) x[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / x.length, 2); const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain(); f.type = "lowpass"; f.frequency.value = lp || 800; g.gain.value = v; s.buffer = b; s.connect(f).connect(g).connect(a.destination); s.start(); };
+  return {
+    start() { const a = ctx(); if (!a || drone) return; drone = a.createOscillator(); const g = a.createGain(); drone.type = "sawtooth"; drone.frequency.value = 55; const f = a.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 180; g.gain.value = .045; drone.connect(f).connect(g).connect(a.destination); drone.start(); },
+    knock() { [0, 330, 660].forEach(t => setTimeout(() => { tone(90, .22, .5, "sine", 45); noise(.12, .5, 400); }, t)); },
+    morse() { [0,1,2].forEach(i => setTimeout(() => tone(70, .12, .5, "sine", 40), i * 260)); [0,1,2].forEach(i => setTimeout(() => tone(70, .35, .5, "sine", 40), 900 + i * 480)); [0,1,2].forEach(i => setTimeout(() => tone(70, .12, .5, "sine", 40), 2500 + i * 260)); },
+    tick() { tone(1700, .04, .08, "square"); },
+    pick() { tone(520, .08, .12, "triangle", 760); },
+    beat() { tone(60, .14, .35, "sine", 40); setTimeout(() => tone(55, .12, .25, "sine", 38), 180); },
+    bad() { tone(48, 1.4, .7, "sine", 30); noise(.6, .5, 1200); },
+    good() { [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => tone(f, .6, .12, "triangle"), i * 140)); },
+    scratch() { noise(1.2, .25, 2600); },
+  };
+})();
+
+/* ===================== story ===================== */
+// node: {art, day, time, water, sfx, lines:[], next | choice:{t:sec, def, opts:[[label, go, cls]]} | hold:{sec, ok, fail, label} | memo:next | end:id}
+const S = {
+  start: { art: "stream", day: "ДЕНЬ 0", time: "19:40", water: 3, lines: ["19:40. Ты смотришь стрим Саши. Сорок тысяч зрителей.", "Саша замолчал на полуслове. Он не моргает уже минуту.", "Чат пишет: «лаги?», «пранк?»."], choice: { t: 8, def: "bite", opts: [["Досмотреть", "bite"], ["Закрыть ноутбук", "yard", "b"]] } },
+  bite: { art: "bite", sfx: "hit", lines: ["Саша наклоняется к камере — и кусает её.", { t: "Чат за секунду становится красным: «он в соседнем подъезде», «у нас тоже».", c: "red" }], next: "yard" },
+  yard: { art: "yard", lines: ["Во дворе кто-то бежит. За ним — второй.", "Слишком быстро для человека, который просто опаздывает."], next: "map" },
+  map: { art: "map", time: "20:31", lines: ["Карта в новостях: за сорок минут заражение прошло полгорода. До твоего дома — два километра.", "Телефон вибрирует. Рассылка МЧС."], memo: "knock" },
+  knock: { art: "door", time: "21:00", sfx: "knock", lines: ["21:00. В дверь стучат. Тихо. Три раза."], choice: { t: 6, def: "wall", opts: [["Посмотреть в глазок", "peep"], ["Замереть и не подходить", "wall", "b"]] } },
+  peep: { art: "peephole", lines: ["В глазке — баба Валя из тридцать восьмой.", { t: "«Егорушка, открой. Я одна боюсь».", c: "q" }, "Она моргает. Но слишком редко."], choice: { t: 6, def: "hold1", opts: [["Открыть — пятое правило же", "E_valya"], ["Молчать", "hold1", "b"]] } },
+  hold1: { art: "peephole", sfx: "beat", lines: [{ t: "Она прижалась ухом к двери. Не дыши.", c: "red" }], hold: { sec: 5, ok: "scratch", fail: "E_dver", label: "Не дыши — держи" } },
+  scratch: { art: "scratch", sfx: "scratch", lines: ["Скрежет по двери. Потом шаги — обратно, к тридцать восьмой."], next: "wall" },
+  wall: { art: "wall", time: "03:40", lines: ["Всю ночь за стенкой что-то ходит. Кругами. Без остановки.", "Темно. Очень хочется включить свет и проверить замки."], choice: { t: 7, def: "sms", opts: [["Включить свет", "E_svet"], ["Проверить замки на ощупь", "sms", "b"]] } },
+  sms: { art: "sms", day: "ДЕНЬ 1", time: "08:12", water: 2.5, lines: [{ t: "Мама: «Сиди дома. Мосты перекрыли. Люблю».", c: "q" }, "Ты со вчера не был в туалете. Бачок полный."], choice: { t: 7, def: "yardmap", opts: [["Смыть после себя", "E_truby"], ["Не смывать. Терпеть запах.", "yardmap", "b"]] } },
+  yardmap: { art: "yardmap", time: "13:00", lines: ["К обеду во дворе стоят двадцать. Не двигаются.", "Они слушают дом."], next: "ceiling" },
+  ceiling: { art: "ceiling", time: "16:00", lines: ["Сверху, из сорок первой, где никто не живёт с 2014-го, — шаги.", "Шаги останавливаются прямо над тобой."], next: "tap" },
+  tap: { art: "tap", day: "ДЕНЬ 3", time: "07:30", water: 0.5, lines: ["День третий. Из крана — только воздух.", "Ты учишься на проектировщика. Ты знаешь, где в хрущёвке ещё есть вода."], choice: { t: 10, def: "radio1", opts: [["Бачок унитаза — 6 литров", "radio1"], ["Батарея — 40 литров", "boil", "b"]] } },
+  boil: { art: "pipes", lines: ["Из батареи течёт рыжая вода с запахом железа. Горло дерёт от жажды."], choice: { t: 7, def: "E_rzhav", opts: [["Выпить сразу", "E_rzhav"], ["Прокипятить и процедить через футболку", "radio2", "b"]] } },
+  radio1: { art: "radio", time: "11:00", water: 1.5, lines: ["Шесть литров. Полтора дня, если по стакану.", { t: "Радио: «Эвакуация со стадиона «Динамо». Сегодня. До 18:00».", c: "q" }], next: "sos" },
+  radio2: { art: "radio", time: "11:00", water: 5, lines: ["Сорок литров кипячёной ржавчины. Почти неделя.", { t: "Радио: «Эвакуация со стадиона «Динамо». Сегодня. До 18:00».", c: "q" }], next: "sos" },
+  sos: { art: "sos", sfx: "morse", lines: ["И тут сверху стучат. Три коротких. Три длинных. Три коротких.", { t: "SOS. Там кто-то живой.", c: "red" }], choice: { t: 10, def: "route", opts: [["А — подняться в кв. 41", "stairs"], ["Б — бежать на стадион", "route", "b"]] } },
+  route: { art: "route", time: "15:20", lines: ["Два с половиной километра. Три двора, полных этих."], choice: { t: 6, def: "E_tolpa", opts: [["Бежать, пока светло", "E_tolpa"], ["Идти тихо, вдоль стен", "stadium", "b"]] } },
+  stadium: { art: "dawn", time: "17:55", lines: ["Ты добираешься к 17:55. Ворота открыты.", "Внутри тишина. Слишком тихая для эвакуации."], next: "E_stadion" },
+  stairs: { art: "door", time: "22:10", lines: ["Чтобы подняться, нужно пройти мимо двери тридцать восьмой.", { t: "За дверью кто-то дышит.", c: "red" }], hold: { sec: 4, ok: "door41", fail: "E_dver", label: "Не дыши — держи" } },
+  door41: { art: "sos", time: "22:12", lines: ["Дверь сорок первой. Опечатка с 2014-го сорвана изнутри."], choice: { t: 8, def: "roof", opts: [["Крикнуть «Эй, я живой!»", "E_tolpa"], ["Постучать: три коротких", "roof", "b"]] } },
+  roof: { art: "dawn", day: "ДЕНЬ 4", time: "05:40", lines: ["Открывает девушка с рацией. «Я Лиза. Я стучала три дня».", "У неё работает рация. Ночью вы тихо поднимаетесь на крышу.", { t: "В 05:40 над хрущёвками появляется вертолёт.", c: "q" }], next: "E_rass" },
+};
+const E = {
+  E_valya: { n: 1, art: "peephole", t: "Своя", d: "Ты открыл бабе Вале. Пятое правило в памятке было чужим.", h: "Переверни памятку. На обороте кто-то написал от руки." },
+  E_dver: { n: 2, art: "scratch", t: "Дыхание", d: "Она услышала тебя через дверь. Хрущёвские стены — двенадцать сантиметров.", h: "Держи палец до конца. Не отпускай." },
+  E_svet: { n: 3, art: "yard", t: "Окно", d: "Одно светлое окно на весь двор. Они пришли на свет.", h: "Второе правило." },
+  E_truby: { n: 4, art: "yardmap", t: "Стояк", d: "Шум воды прошёл по трубам через весь подъезд. Двадцать голов повернулись к твоему окну.", h: "Четвёртое правило." },
+  E_rzhav: { n: 5, art: "pipes", t: "Ржавая вода", d: "Ты выпил воду из батареи, не прокипятив. К вечеру стало не до зомби.", h: "Шестое правило." },
+  E_tolpa: { n: 6, art: "route", t: "Шум", d: "Ты зашумел. Они бегают быстрее тебя.", h: "Третье правило: они идут на звук." },
+  E_stadion: { n: 7, art: "zstream", t: "Пустой стадион", d: "Эвакуация закончилась в 16:00, а не в 18:00. Радио повторяло старую запись.", h: "Кто-то стучал тебе SOS. Может, стоило ответить?" },
+  E_rass: { n: 8, art: "dawn", t: "Рассвет", d: "Вертолёт забирает вас с крыши. Лиза держит рацию, ты — памятку с зачёркнутым пятым правилом.", h: "", good: true },
+};
+
+/* ===================== engine ===================== */
+const ST = { endings: new Set(), timer: null, node: null, lineI: 0, busy: false };
+function loadEndings(cb) {
+  try { JSON.parse(localStorage.getItem(CFG.key) || "[]").forEach(x => ST.endings.add(x)); } catch (e) {}
+  if (TG && TG.CloudStorage) { try { TG.CloudStorage.getItem(CFG.key, (err, v) => { if (!err && v) { try { JSON.parse(v).forEach(x => ST.endings.add(x)); } catch (e) {} } cb(); }); } catch (e) { cb(); } } else cb();
+}
+function saveEndings() {
+  const v = JSON.stringify([...ST.endings]);
+  try { localStorage.setItem(CFG.key, v); } catch (e) {}
+  if (TG && TG.CloudStorage) { try { TG.CloudStorage.setItem(CFG.key, v); } catch (e) {} }
+}
+function dots(el) {
+  const ids = Object.keys(E);
+  el.innerHTML = ids.map(id => `<span class="${ST.endings.has(id) ? (E[id].good ? "gold" : "got") : ""}" title="${ST.endings.has(id) ? E[id].t : "?"}"></span>`).join("");
+}
+const art = n => `art/${n}.jpg`;
+Object.values(S).concat(Object.values(E)).forEach(o => { const i = new Image(); i.src = art(o.art); });
+
+function show(id) { ["title", "game", "end"].forEach(s => $(s).hidden = s !== id); }
+function clearTimer() { if (ST.timer) { cancelAnimationFrame(ST.timer.raf); clearInterval(ST.timer.tick); ST.timer = null; } }
+
+function go(id) {
+  clearTimer(); ST.waitNext = null;
+  if (id.startsWith("E_")) return ending(id);
+  const n = S[id]; ST.node = n; ST.lineI = 0;
+  const bg = $("bg");
+  bg.style.backgroundImage = `url(${art(n.art)})`;
+  if (n.day) $("hday").textContent = n.day;
+  if (n.time) $("htime").textContent = n.time;
+  if (n.water !== undefined) $("hwater").textContent = `Вода · ${String(n.water).replace(".", ",")} дн.`;
+  $("txt").innerHTML = ""; $("opts").innerHTML = ""; $("tap").hidden = false;
+  if (n.sfx === "knock") { SND.knock(); bg.classList.remove("shake"); void bg.offsetWidth; bg.classList.add("shake"); haptic("heavy"); }
+  if (n.sfx === "morse") SND.morse();
+  if (n.sfx === "beat") SND.beat();
+  if (n.sfx === "scratch") SND.scratch();
+  if (n.sfx === "hit") { SND.bad(); flash(); haptic("heavy"); }
+  STAT.ev("node", id);
+  nextLine();
+}
+function nextLine() {
+  const n = ST.node;
+  if (ST.lineI < n.lines.length) {
+    const l = n.lines[ST.lineI++], p = document.createElement("p");
+    if (typeof l === "string") p.textContent = l; else { p.textContent = l.t; p.className = l.c || ""; }
+    $("txt").appendChild(p);
+    if (ST.lineI < n.lines.length) return;
+  }
+  // lines finished
+  if (n.choice) { $("tap").hidden = true; choice(n.choice); }
+  else if (n.hold) { $("tap").hidden = true; hold(n.hold); }
+  else if (n.memo) { $("tap").hidden = true; setTimeout(() => memo(n.memo), 500); }
+  else ST.waitNext = n.next;
+}
+$("game").addEventListener("click", e => {
+  if (e.target.closest(".opts")) return;
+  SND.start();
+  const n = ST.node; if (!n) return;
+  if (ST.lineI < n.lines.length) { nextLine(); return; }
+  if (ST.waitNext) { const t = ST.waitNext; ST.waitNext = null; go(t); }
+});
+function choice(c) {
+  const box = $("opts");
+  box.innerHTML = c.opts.map(([t, g, cls]) => `<button class="opt ${cls || ""}" data-go="${g}">${t}</button>`).join("") + `<div class="timer"><i id="tbar"></i></div>`;
+  box.querySelectorAll(".opt").forEach(b => b.onclick = ev => { ev.stopPropagation(); SND.pick(); haptic(); go(b.dataset.go); });
+  const t0 = performance.now(), dur = c.t * 1000;
+  const raf = () => { const p = 1 - (performance.now() - t0) / dur; const bar = $("tbar"); if (bar) bar.style.transform = `scaleX(${Math.max(0, p)})`; if (p <= 0) { go(c.def); return; } ST.timer.raf = requestAnimationFrame(raf); };
+  ST.timer = { raf: requestAnimationFrame(raf), tick: setInterval(() => SND.tick(), 1000) };
+}
+function hold(h) {
+  const box = $("opts");
+  box.innerHTML = `<button class="hold" id="hb"><i id="hf"></i><span>${h.label} · ${h.sec} с</span></button><div class="timer"><i id="tbar"></i></div>`;
+  const hb = $("hb"), hf = $("hf");
+  let t0 = null, done = false, raf = null, beat = null;
+  const fin = ok => { if (done) return; done = true; cancelAnimationFrame(raf); clearInterval(beat); clearTimer(); go(ok ? h.ok : h.fail); };
+  const loop = () => { const p = (performance.now() - t0) / (h.sec * 1000); hf.style.transform = `scaleX(${Math.min(1, p)})`; if (p >= 1) { haptic("medium"); return fin(true); } raf = requestAnimationFrame(loop); };
+  const down = ev => { ev.preventDefault(); ev.stopPropagation(); if (done || t0) return; clearTimer(); $("tbar").parentNode.hidden = true; t0 = performance.now(); raf = requestAnimationFrame(loop); beat = setInterval(() => { SND.beat(); haptic("soft"); }, 900); };
+  const up = ev => { ev.preventDefault(); ev.stopPropagation(); if (t0 && !done) { flash(); fin(false); } };
+  hb.addEventListener("pointerdown", down); hb.addEventListener("pointerup", up); hb.addEventListener("pointerleave", up); hb.addEventListener("pointercancel", up);
+  // must start holding within 4 s
+  const t1 = performance.now();
+  const wait = () => { if (t0 || done) return; const p = 1 - (performance.now() - t1) / 4000; const bar = $("tbar"); if (bar) bar.style.transform = `scaleX(${Math.max(0, p)})`; if (p <= 0) return fin(false); ST.timer.raf = requestAnimationFrame(wait); };
+  ST.timer = { raf: requestAnimationFrame(wait), tick: setInterval(() => {}, 1e6) };
+}
+function memo(next) {
+  $("memo").hidden = false; $("front").hidden = false; $("backside").hidden = true; $("flip").textContent = "Перевернуть";
+  $("flip").onclick = () => { const b = $("backside").hidden; $("backside").hidden = !b; $("front").hidden = b; $("flip").textContent = b ? "Лицевая сторона" : "Перевернуть"; SND.pick(); if (b) STAT.ev("flip", "перевернул памятку"); };
+  $("memook").onclick = () => { $("memo").hidden = true; SND.pick(); go(next); };
+}
+function flash() { const f = $("flash"); f.classList.remove("on"); void f.offsetWidth; f.classList.add("on"); }
+function ending(id) {
+  const e = E[id];
+  ST.endings.add(id); saveEndings();
+  STAT.ev("end-" + id, e.t);
+  $("ebg").style.backgroundImage = `url(${art(e.art)})`;
+  $("ek").textContent = e.good ? "Настоящая концовка · 8 из 8" : `Концовка ${e.n} из 8`;
+  $("ek").className = "end-k" + (e.good ? " good" : "");
+  $("et").textContent = e.t; $("ed").textContent = e.d; $("eh").textContent = e.h || "";
+  dots($("edots"));
+  if (e.good) SND.good(); else { SND.bad(); flash(); }
+  haptic(e.good ? "light" : "heavy");
+  show("end");
+}
+function share() {
+  STAT.ev("share", "позвал друга");
+  const text = "Зомби в хрущёвке, памятка МЧС из 6 правил — одно чужое. Доживёшь до эвакуации?";
+  const url = CFG.botLink + "?startapp=" + CFG.startapp;
+  if (TG && TG.openTelegramLink) { TG.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`); return; }
+  try { navigator.clipboard.writeText(text + " " + url).then(() => toast("Ссылка скопирована, отправь другу"), () => toast("Не удалось скопировать")); } catch (err) { toast("Не удалось скопировать"); }
+}
+function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2200); }
+
+$("play").onclick = () => { SND.start(); STAT.ev("start", "начал"); show("game"); go("start"); };
+$("again").onclick = () => { STAT.ev("retry", "переиграл"); show("game"); go("start"); };
+$("share1").onclick = share; $("share2").onclick = share;
+loadEndings(() => dots($("tdots")));
+if (TG) { try { TG.ready(); TG.expand(); TG.setHeaderColor && TG.setHeaderColor("#0f1030"); TG.setBackgroundColor && TG.setBackgroundColor("#0f1030"); } catch (e) {} }
+</script>
+</body>
+</html>

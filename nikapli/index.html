@@ -12,7 +12,7 @@
 /* one bot link opens any chapter: ?startapp=elektrichka -> глава 2, ?startapp=hub -> список игр */
 (function () { try {
   var tg = window.Telegram && Telegram.WebApp, p = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || new URLSearchParams(location.search).get("tgWebAppStartParam") || "";
-  var to = { elektrichka: "../elektrichka/", hub: "../" }[p];
+  var to = { elektrichka: "../elektrichka/", zombie: "../zombie/", hub: "../" }[p];
   if (to) location.replace(to + location.search + location.hash);
 } catch (e) {} })();
 </script>
